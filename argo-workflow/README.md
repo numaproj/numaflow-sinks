@@ -15,3 +15,25 @@ supports caching and dedupe triggered event. you can define the  dedup `keys`, c
 	READ_INTERVAL_DURATION   : Workflow Triggering interval
 	WORKFLOW_NAME_PREFIX     : Workflow Name prefix
 
+### Example Configuration
+
+```yaml
+  - name: training-workflow
+    sink:
+      udsink:
+        container:
+          env:
+            - name: ARGO_WORKFLOW_TEMPLATE
+              value: <WorkflowTemplate Name>
+            - name: PARAMETER_NAME
+              value: "payload"
+            - name: MSG_DEDUP_KEYS
+              value: ".namespace,.metric"
+            - name: READ_INTERVAL_DURATION
+              value: "1s"
+            - name: DEDUP_CACHE_LIMIT
+              value: "10000"
+            - name: DEDUP_CACHE_TTL_DURATION
+              value: "30m"
+          image: quay.io/numaio/numaflow-sink/argo-workflow:latest
+```
