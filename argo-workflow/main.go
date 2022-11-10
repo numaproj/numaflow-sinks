@@ -102,8 +102,9 @@ func (as *argoWfSink) handle(ctx context.Context, datumList []sinksdk.Datum) sin
 			if _, ok := as.cacheKeys.Get(key); !ok {
 				payloads = append(payloads, string(datum.Value()))
 				as.cacheKeys.Add(key, true, as.keyTTL)
+				as.logger.Infof("Added unique key %s", key)
 			} else {
-				as.logger.Infof("Duplicate %s message skipped", string(datum.ID()))
+				as.logger.Infof("Duplicate %s message skipped", key)
 			}
 		} else {
 			payloads = append(payloads, string(datum.Value()))
@@ -116,10 +117,12 @@ func (as *argoWfSink) handle(ctx context.Context, datumList []sinksdk.Datum) sin
 	}
 	params, err := json.Marshal(payloads)
 	if err != nil {
+		as.logger.Errorf("Payload marshal failed. %v", err)
 		return failed
 	}
 	err = as.submitWorkflow(string(params))
 	if err != nil {
+		as.logger.Errorf("Workflow submission failed. %v", err)
 		return failed
 	}
 	// read Interval
