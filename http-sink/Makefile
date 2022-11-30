@@ -1,6 +1,6 @@
 CURRENT_DIR=$(shell pwd)
 DIST_DIR=${CURRENT_DIR}/dist
-BINARY_NAME:=numaflow-sink/prometheus-pusher
+BINARY_NAME:=numaflow-sink/http-sink
 DOCKERFILE:=Dockerfile
 
 BUILD_DATE=$(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
@@ -45,7 +45,7 @@ clean:
 	-rm -rf ${CURRENT_DIR}/dist
 
 test:
-	go test -v ./server
+	go test -v .
 
 $(GOPATH)/bin/golangci-lint:
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b `go env GOPATH`/bin v1.46.2

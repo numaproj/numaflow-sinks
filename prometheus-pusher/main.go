@@ -83,7 +83,7 @@ func (p *prometheusSink) handle(ctx context.Context, datumList []sinksdk.Datum) 
 	for _, datum := range datumList {
 		payloads = append(payloads, string(datum.Value()))
 		ok = ok.Append(sinksdk.ResponseOK(datum.ID()))
-		failed = failed.Append(sinksdk.ResponseFailure(datum.ID(), "failed to trigger workflow"))
+		failed = failed.Append(sinksdk.ResponseFailure(datum.ID(), "failed to push the metrics"))
 	}
 	var pls []Payload
 	for _, payloadMsg := range payloads {
