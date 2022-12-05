@@ -40,4 +40,4 @@ FROM scratch
 COPY --from=builder /app/bin/main .
 
 # Run executable
-CMD ["./main"]
+ENTRYPOINT ["./main"]
