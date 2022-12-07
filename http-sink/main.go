@@ -11,6 +11,7 @@ import (
 	"github.com/numaproj/numaflow/pkg/shared/logging"
 	"go.uber.org/zap"
 	"io"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"net/http"
 	"time"
 )
@@ -23,6 +24,7 @@ type httpSink struct {
 	timeout      int
 	windowing    int
 	skipInsecure bool
+	dropIfError  bool
 	headers      arrayFlags
 }
 type arrayFlags []string
@@ -65,7 +67,7 @@ func (hs *httpSink) handle(ctx context.Context, datumList []sinksdk.Datum) sinks
 	for _, datum := range datumList {
 		payloads = append(payloads, string(datum.Value()))
 		ok = ok.Append(sinksdk.ResponseOK(datum.ID()))
-		failed = failed.Append(sinksdk.ResponseFailure(datum.ID(), "failed to trigger workflow"))
+		failed = failed.Append(sinksdk.ResponseFailure(datum.ID(), "failed to forward message"))
 	}
 	payloadBytes, err := json.Marshal(payloads)
 	if err != nil {
@@ -73,11 +75,28 @@ func (hs *httpSink) handle(ctx context.Context, datumList []sinksdk.Datum) sinks
 		return failed
 	}
 	data := bytes.NewReader(payloadBytes)
-	err = hs.sendHTTPRequest(data)
-	if err != nil {
-		hs.logger.Errorf("HTTP Request failed. %v", err)
+	backoff := wait.Backoff{
+		Steps:    hs.retries,
+		Duration: 10 * time.Second,
+		Factor:   2,
+	}
+	retryError := wait.ExponentialBackoffWithContext(ctx, backoff, func() (done bool, err error) {
+		err = hs.sendHTTPRequest(data)
+		if err != nil {
+			hs.logger.Errorf("HTTP Request failed. %v", err)
+			return false, nil
+		}
+		return true, nil
+	})
+	if retryError != nil {
+		hs.logger.Errorf("HTTP Request failed. Error : %v", retryError)
+		if hs.dropIfError {
+			hs.logger.Warn("Dropping messages due to failure")
+			return ok
+		}
 		return failed
 	}
+
 	hs.logger.Info("HTTP Request send successfully")
 	return ok
 }
@@ -90,6 +109,7 @@ func main() {
 	flag.IntVar(&hs.retries, "retries", 3, "Request Retries")
 	flag.IntVar(&hs.timeout, "timeout", 30, "Request Timeout in seconds")
 	flag.BoolVar(&hs.skipInsecure, "insecure-skip-tls-verify", false, "Skip TLS verify")
+	flag.BoolVar(&hs.dropIfError, "dropIfError", false, "Messages will drop after retry")
 	flag.Var(&hs.headers, "headers", "HTTP Headers")
 
 	// Parse the flag
