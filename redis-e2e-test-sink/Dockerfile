@@ -1,43 +1,20 @@
-# Start from golang base image
-FROM golang:alpine as builder
+####################################################################################################
+# base
+####################################################################################################
+FROM alpine:3.12.3 as base
+RUN apk update && apk upgrade && \
+    apk add ca-certificates && \
+    apk --no-cache add tzdata
 
-# Enable go modules
-ENV GO111MODULE=on
+COPY dist/redis-e2e-test-sink /bin/redis-e2e-test-sink
+RUN chmod +x /bin/redis-e2e-test-sink
 
-# Install git. (alpine image does not have git in it)
-RUN apk update && apk add --no-cache git
-
-# Set current working directory
-WORKDIR /app
-
-# Note here: To avoid downloading dependencies every time we
-# build image. Here, we are caching all the dependencies by
-# first copying go.mod and go.sum files and downloading them,
-# to be used every time we build the image if the dependencies
-# are not changed.
-
-# Copy go mod and sum files
-COPY go.mod ./
-COPY go.sum ./
-
-# Download all dependencies.
-RUN go mod download
-
-# Now, copy the source code
-COPY . .
-
-# Note here: CGO_ENABLED is disabled for cross system compilation
-# It is also a common best practise.
-
-# Build the application.
-RUN CGO_ENABLED=0 go build -o ./bin/main .
-
-# Finally our multi-stage to build a small image
-# Start a new stage from scratch
-FROM scratch
-
-# Copy the Pre-built binary file
-COPY --from=builder /app/bin/main .
-
-# Run executable
-ENTRYPOINT ["./main"]
+####################################################################################################
+# redis
+####################################################################################################
+FROM scratch as redis
+ARG ARCH
+COPY --from=base /usr/share/zoneinfo /usr/share/zoneinfo
+COPY --from=base /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+COPY --from=base /bin/redis-e2e-test-sink /bin/redis-e2e-test-sink
+ENTRYPOINT [ "/bin/redis-e2e-test-sink" ]
