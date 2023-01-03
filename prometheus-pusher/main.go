@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	sinksdk "github.com/numaproj/numaflow-go/pkg/sink"
@@ -19,11 +20,13 @@ import (
 const (
 	PROMETHEUS_SERVER      = "PROMETHEUS_SERVER"
 	SKIP_VALIDATION_FAILED = "SKIP_VALIDATION_FAILED"
+	METRICS_LABELS         = "METRICS_LABELS"
 )
 
 type prometheusSink struct {
 	logger     *zap.SugaredLogger
 	skipFailed bool
+	labels     map[string]string
 }
 
 type myCollector struct {
@@ -92,6 +95,7 @@ func (p *prometheusSink) handle(ctx context.Context, datumList []sinksdk.Datum) 
 		if !p.skipFailed && err != nil {
 			return failed
 		}
+		pl.mergeLabels(p.labels)
 		pls = append(pls, pl)
 	}
 	err := p.push(pls)
@@ -110,9 +114,30 @@ func (p *prometheusSink) createPusher(jobName string) (*push.Pusher, error) {
 	return pusher, nil
 }
 
+func parseStringToMap(envValue string) map[string]string {
+	items := make(map[string]string)
+	if envValue == "" {
+		return items
+	}
+	datas := strings.Split(envValue, ",")
+	getKeyVal := func(item string) (key, val string) {
+		splits := strings.Split(item, "=")
+		key = splits[0]
+		val = splits[1]
+		return
+	}
+	for _, item := range datas {
+		key, val := getKeyVal(item)
+		items[key] = val
+	}
+	return items
+}
+
 func main() {
 	logger := logging.NewLogger().Named("prometheus-sink")
 	skipFailedStr := os.Getenv(SKIP_VALIDATION_FAILED)
+	labels := parseStringToMap(os.Getenv(METRICS_LABELS))
+
 	skipFailed := false
 	var err error
 	if skipFailedStr != "" {
@@ -121,6 +146,6 @@ func main() {
 			panic(err)
 		}
 	}
-	ps := prometheusSink{logger: logger, skipFailed: skipFailed}
+	ps := prometheusSink{logger: logger, skipFailed: skipFailed, labels: labels}
 	server.New().RegisterSinker(sinksdk.SinkFunc(ps.handle)).Start(context.Background())
 }

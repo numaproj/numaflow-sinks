@@ -5,6 +5,7 @@ This Sink will send the prometheus metrics `push gateway`
 
 	PROMETHEUS_SERVER      : Prometheus or Push Gateway URL
 	SKIP_VALIDATION_FAILED : Skip the marshal error for prometheus metric
+    METRICS_LABELS         : Configure additional Labels for metrics
 
 ### Example Configuration
 
@@ -18,6 +19,8 @@ This Sink will send the prometheus metrics `push gateway`
             value: "true"
           - name: "PROMETHEUS_SERVER"
             value: "pushgateway.monitoring.svc.cluster.local:9091"
+          - name: "METRICS_LABELS"
+            value: "label1=value1,label2=value2"
           image: quay.io/numaio/numaflow-sink/prometheus-pusher:latest
 
 ```
