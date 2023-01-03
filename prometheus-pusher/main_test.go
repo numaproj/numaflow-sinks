@@ -26,9 +26,11 @@ func TestParseStringToMap(t *testing.T) {
 		assert.Len(t, data, 1)
 	})
 	t.Run("Invalid_value2", func(t *testing.T) {
-		param := "key1=,key2=val"
+		param := "key1=,key2=value2"
 		data := parseStringToMap(param)
 		assert.Len(t, data, 2)
+		assert.Equal(t, data["key1"], "")
+		assert.Equal(t, data["key2"], "value2")
 	})
 }
 
