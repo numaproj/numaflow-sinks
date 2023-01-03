@@ -12,11 +12,18 @@ func TestParseStringToMap(t *testing.T) {
 		data := parseStringToMap(param)
 		assert.Len(t, data, 3)
 		assert.Equal(t, data["key"], "value1")
+		assert.Equal(t, data["key1"], "value2")
+		assert.Equal(t, data["key2"], "value3")
 	})
 	t.Run("No_value", func(t *testing.T) {
 		param := ""
 		data := parseStringToMap(param)
 		assert.Len(t, data, 0)
+	})
+	t.Run("Invalid_value", func(t *testing.T) {
+		param := "key=value1,key1"
+		data := parseStringToMap(param)
+		assert.Len(t, data, 1)
 	})
 }
 

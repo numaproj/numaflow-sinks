@@ -122,13 +122,17 @@ func parseStringToMap(envValue string) map[string]string {
 	datas := strings.Split(envValue, ",")
 	getKeyVal := func(item string) (key, val string) {
 		splits := strings.Split(item, "=")
-		key = splits[0]
-		val = splits[1]
+		if len(splits) == 2 {
+			key = splits[0]
+			val = splits[1]
+		}
 		return
 	}
 	for _, item := range datas {
 		key, val := getKeyVal(item)
-		items[key] = val
+		if key != "" {
+			items[key] = val
+		}
 	}
 	return items
 }
