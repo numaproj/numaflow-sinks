@@ -4,16 +4,16 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
-	"encoding/json"
 	"flag"
-	sinksdk "github.com/numaproj/numaflow-go/pkg/sink"
-	"github.com/numaproj/numaflow-go/pkg/sink/server"
-	"github.com/numaproj/numaflow/pkg/shared/logging"
-	"go.uber.org/zap"
 	"io"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"net/http"
 	"time"
+
+	sinksdk "github.com/numaproj/numaflow-go/pkg/sink"
+	"github.com/numaproj/numaflow-go/pkg/sink/server"
+	"github.com/numaproj/numaflow/pkg/shared/logging"
+	"go.uber.org/zap"
 )
 
 type httpSink struct {
@@ -41,6 +41,7 @@ func (i *arrayFlags) Set(value string) error {
 func (hs *httpSink) sendHTTPRequest(data io.Reader) error {
 	client := &http.Client{Timeout: time.Duration(hs.timeout) * time.Second}
 	if hs.skipInsecure {
+		hs.logger.Info("Send insecure request")
 		tr := &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		}
@@ -63,37 +64,33 @@ func (hs *httpSink) sendHTTPRequest(data io.Reader) error {
 func (hs *httpSink) handle(ctx context.Context, datumList []sinksdk.Datum) sinksdk.Responses {
 	ok := sinksdk.ResponsesBuilder()
 	failed := sinksdk.ResponsesBuilder()
-	var payloads []string
 	for _, datum := range datumList {
-		payloads = append(payloads, string(datum.Value()))
+		//TODO Need to implemente parallel sending request
+		data := bytes.NewReader(datum.Value())
+		backoff := wait.Backoff{
+			Steps:    hs.retries,
+			Duration: 10 * time.Second,
+			Factor:   2,
+		}
+		retryError := wait.ExponentialBackoffWithContext(ctx, backoff, func() (done bool, err error) {
+			err = hs.sendHTTPRequest(data)
+			if err != nil {
+				hs.logger.Errorf("HTTP Request failed. %v", err)
+				return false, nil
+			}
+			return true, nil
+		})
+		if retryError != nil {
+			hs.logger.Errorf("HTTP Request failed. Error : %v", retryError)
+			if hs.dropIfError {
+				hs.logger.Warn("Dropping messages due to failure")
+				return ok
+			}
+			failed = failed.Append(sinksdk.ResponseFailure(datum.ID(), "failed to forward message"))
+		}
 		ok = ok.Append(sinksdk.ResponseOK(datum.ID()))
-		failed = failed.Append(sinksdk.ResponseFailure(datum.ID(), "failed to forward message"))
 	}
-	payloadBytes, err := json.Marshal(payloads)
-	if err != nil {
-		hs.logger.Errorf("Payload json marshall failed. %v", err)
-		return failed
-	}
-	data := bytes.NewReader(payloadBytes)
-	backoff := wait.Backoff{
-		Steps:    hs.retries,
-		Duration: 10 * time.Second,
-		Factor:   2,
-	}
-	retryError := wait.ExponentialBackoffWithContext(ctx, backoff, func() (done bool, err error) {
-		err = hs.sendHTTPRequest(data)
-		if err != nil {
-			hs.logger.Errorf("HTTP Request failed. %v", err)
-			return false, nil
-		}
-		return true, nil
-	})
-	if retryError != nil {
-		hs.logger.Errorf("HTTP Request failed. Error : %v", retryError)
-		if hs.dropIfError {
-			hs.logger.Warn("Dropping messages due to failure")
-			return ok
-		}
+	if len(failed) > 0 {
 		return failed
 	}
 
@@ -108,12 +105,13 @@ func main() {
 	flag.StringVar(&hs.method, "method", "GET", "HTTP Method")
 	flag.IntVar(&hs.retries, "retries", 3, "Request Retries")
 	flag.IntVar(&hs.timeout, "timeout", 30, "Request Timeout in seconds")
-	flag.BoolVar(&hs.skipInsecure, "insecure-skip-tls-verify", false, "Skip TLS verify")
+	flag.BoolVar(&hs.skipInsecure, "insecure", false, "Skip TLS verify")
 	flag.BoolVar(&hs.dropIfError, "dropIfError", false, "Messages will drop after retry")
 	flag.Var(&hs.headers, "headers", "HTTP Headers")
 
 	// Parse the flag
 	flag.Parse()
 
+	hs.logger.Info("HTTP Sink starting successfully with args %v", hs)
 	server.New().RegisterSinker(sinksdk.SinkFunc(hs.handle)).Start(context.Background())
 }
