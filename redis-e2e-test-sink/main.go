@@ -3,11 +3,12 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
+	"os"
+
 	"github.com/go-redis/redis/v8"
 	sinksdk "github.com/numaproj/numaflow-go/pkg/sink"
 	"github.com/numaproj/numaflow-go/pkg/sink/server"
-	"log"
-	"os"
 )
 
 // This redis UDSink is created for numaflow e2e tests. This handle function assumes that
