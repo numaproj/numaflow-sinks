@@ -77,12 +77,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
         with:
-          tag_name: $(basename $GITHUB_REF)
+          tag_name: ${{ github.ref }}
           release_name: Release ${{ github.ref }}
           body: |
             $(basename $GITHUB_REF) has been released. 
-            Argo-workflow : quay.io/numaio/numaflow-sink/argo-workflow:$(basename $GITHUB_REF)
-            Http-sink  : quay.io/numaio/numaflow-sink/http-sink:$(basename $GITHUB_REF)
-            Pormetheus-Pusher: quay.io/numaio/numaflow-sink/prometheus-pusher:$(basename $GITHUB_REF)
+            Argo-workflow : quay.io/numaio/numaflow-sink/argo-workflow:${{ github.ref }}
+            Http-sink  : quay.io/numaio/numaflow-sink/http-sink:${{ github.ref }}
+            Pormetheus-Pusher: quay.io/numaio/numaflow-sink/prometheus-pusher:${{ github.ref }}
           draft: false
           prerelease: false
