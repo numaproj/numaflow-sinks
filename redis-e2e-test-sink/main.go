@@ -3,9 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/google/uuid"
 	"log"
-	"time"
+	"os"
 
 	"github.com/go-redis/redis/v8"
 	sinksdk "github.com/numaproj/numaflow-go/pkg/sink"
@@ -24,17 +23,15 @@ func handle(ctx context.Context, datumStreamCh <-chan sinksdk.Datum) sinksdk.Res
 		_ = d.EventTime()
 		_ = d.Watermark()
 
-		// Our E2E tests time out after 10 minutes. Set redis message TTL to the same.
-		const msgTTL = 10 * time.Minute
-		// When redis sink receives two datum with same data, e2e tests should be able to verify two occurrences.
-		// We append an uuid to the datum, to make the key globally unique. Such that two datum with same data get persisted in redis as two separate keys.
-		key := fmt.Sprintf("%s-%s", string(d.Value()), uuid.New().String())
-		err := client.Set(ctx, key, 1, msgTTL).Err()
-
+		// We use redis hashes to store messages.
+		// The name of a hash is pipelineName:sinkName.
+		// Each field of a hash is the content of a message and value of the field is the no. of occurrences of the message.
+		hkey := fmt.Sprintf("%s:%s", os.Getenv("NUMAFLOW_PIPELINE_NAME"), os.Getenv("NUMAFLOW_VERTEX_NAME"))
+		err := client.HIncrBy(ctx, hkey, string(d.Value()), 1).Err()
 		if err != nil {
 			log.Println("Set Error - ", err)
 		} else {
-			log.Printf("Added key %s\n", key)
+			log.Printf("Incremented by 1 the no. of occurrences of %s under hash key %s\n", string(d.Value()), hkey)
 		}
 
 		id := d.ID()
