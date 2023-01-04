@@ -30,10 +30,44 @@ jobs:
           fi
 
           tag_suffix=$(echo $PLATFORM | sed -r "s/\//-/g")
-          image_name="${DOCKERIO_ORG}/${TARGET}:${tag}-${tag_suffix}"
+          image_name="${DOCKERIO_ORG}/numaflow-sink/argo-workflow:${tag}
           
           cd argo-workflow
           docker buildx build \
             --output "type=image,push=true" \
             --platform="${PLATFORM}" \
             --tag $image_name .
+          
+          tag_suffix=$(echo $PLATFORM | sed -r "s/\//-/g")
+          image_name="${DOCKERIO_ORG}/numaflow-sink/http-sink:${tag}
+          
+          cd http-sink
+          docker buildx build \
+            --output "type=image,push=true" \
+            --platform="${PLATFORM}" \
+            --tag $image_name .
+          
+                    tag_suffix=$(echo $PLATFORM | sed -r "s/\//-/g")
+          image_name="${DOCKERIO_ORG}/numaflow-sink/prometheus-pusher:${tag}
+          
+          cd prometheus-pusher
+          docker buildx build \
+            --output "type=image,push=true" \
+            --platform="${PLATFORM}" \
+            --tag $image_name .
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+        with:
+          tag_name: $(basename $GITHUB_REF)
+          release_name: Release ${{ github.ref }}
+          body: |
+            $(basename $GITHUB_REF) has been released. 
+            Argo-workflow : quay.io/numaio/numaflow-sink/argo-workflow:$(basename $GITHUB_REF)
+            Http-sink  : quay.io/numaio/numaflow-sink/http-sink:$(basename $GITHUB_REF)
+            Pormetheus-Pusher: quay.io/numaio/numaflow-sink/prometheus-pusher:$(basename $GITHUB_REF)
+          draft: false
+          prerelease: false
