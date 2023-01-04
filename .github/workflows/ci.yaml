@@ -18,7 +18,22 @@ jobs:
           username: ${{ secrets.QUAYIO_USERNAME }}
           password: ${{ secrets.QUAYIO_PASSWORD }}
 
-      - name: Run distcheck
+      - name: Docker Buildx
+        env:
+          DOCKERIO_ORG: quay.io/numaio
+          PLATFORM: linux/x86_64
+          TARGET: numaflow-sink/argo-workflow
         run: |
+          tag=$(basename $GITHUB_REF)
+          if [ $tag = "master" ]; then
+            tag="latest"
+          fi
+
+          tag_suffix=$(echo $PLATFORM | sed -r "s/\//-/g")
+          image_name="${DOCKERIO_ORG}/${TARGET}:${tag}-${tag_suffix}"
+          
           cd argo-workflow
-          make image
+          docker buildx build \
+            --output "type=image,push=true" \
+            --platform="${PLATFORM}" \
+            --tag $image_name .
