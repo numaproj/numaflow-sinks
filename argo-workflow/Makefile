@@ -28,7 +28,7 @@ ifeq (${DOCKER_PUSH},true)
 endif
 
 ifneq (${GIT_TAG},)
-VERSION=$(GIT_TAG)
+VERSION=${GIT_TAG}
 override LDFLAGS += -X ${PACKAGE}.gitTag=${GIT_TAG}
 endif
 
