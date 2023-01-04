@@ -8,8 +8,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    matrix:
-      platform: [ linux/amd64 ]
     steps:
       - uses: actions/checkout@v3
 
