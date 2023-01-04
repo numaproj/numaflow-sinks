@@ -18,7 +18,7 @@ jobs:
           username: ${{ secrets.QUAYIO_USERNAME }}
           password: ${{ secrets.QUAYIO_PASSWORD }}
 
-      - name: Docker Buildx
+      - name: Docker Buildx Argo workflow
         env:
           DOCKERIO_ORG: quay.io/numaio
           PLATFORM: linux/x86_64
@@ -29,23 +29,41 @@ jobs:
             tag="latest"
           fi
           
-          image_name="${DOCKERIO_ORG}/numaflow-sink/argo-workflow:${tag}
+          image_name="${DOCKERIO_ORG}/numaflow-sink/argo-workflow:${tag}"
           
           cd argo-workflow
           docker buildx build \
             --output "type=image,push=true" \
             --platform="${PLATFORM}" \
             --tag $image_name .
-
-          image_name="${DOCKERIO_ORG}/numaflow-sink/http-sink:${tag}
+            
+      - name: Docker Buildx HTTP Sink
+        env:
+          DOCKERIO_ORG: quay.io/numaio
+          PLATFORM: linux/x86_64
+        run: |
+          tag=$(basename $GITHUB_REF)
+          if [ $tag = "master" ]; then
+            tag="latest"
+          fi
+          image_name="${DOCKERIO_ORG}/numaflow-sink/http-sink:${tag}"
           
           cd http-sink
           docker buildx build \
             --output "type=image,push=true" \
             --platform="${PLATFORM}" \
             --tag $image_name .
-
-          image_name="${DOCKERIO_ORG}/numaflow-sink/prometheus-pusher:${tag}
+            
+      - name: Docker Buildx Prometheus-pusher
+        env:
+          DOCKERIO_ORG: quay.io/numaio
+          PLATFORM: linux/x86_64
+        run: |
+          tag=$(basename $GITHUB_REF)
+          if [ $tag = "master" ]; then
+            tag="latest"
+          fi
+          image_name="${DOCKERIO_ORG}/numaflow-sink/prometheus-pusher:${tag}"
           
           cd prometheus-pusher
           docker buildx build \
