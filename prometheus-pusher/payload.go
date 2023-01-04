@@ -9,3 +9,16 @@ type Payload struct {
 	Value       float64           `json:"value,omitempty"`
 	Labels      map[string]string `json:"labels,omitempty"`
 }
+
+func (p *Payload) mergeLabels(labels map[string]string) {
+	if p.Labels == nil {
+		p.Labels = make(map[string]string)
+	}
+	for key, val := range labels {
+		// Should not override the payload label values
+		if _, ok := p.Labels[key]; !ok {
+			p.Labels[key] = val
+		}
+
+	}
+}
