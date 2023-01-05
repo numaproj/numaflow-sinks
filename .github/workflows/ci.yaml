@@ -10,7 +10,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-
+      - name: Set output
+        id: vars
+        run: echo "tag=${GITHUB_REF#refs/*/}" >> $GITHUB_OUTPUT
       - name: Docker Login
         uses: docker/login-action@v2
         with:
@@ -80,9 +82,9 @@ jobs:
           tag_name: ${{ github.ref }}
           release_name: Release ${{ github.ref }}
           body: |
-            $(basename $GITHUB_REF) has been released. 
-            Argo-workflow : quay.io/numaio/numaflow-sink/argo-workflow:${{ github.ref }}
-            Http-sink  : quay.io/numaio/numaflow-sink/http-sink:${{ github.ref }}
-            Pormetheus-Pusher: quay.io/numaio/numaflow-sink/prometheus-pusher:${{ github.ref }}
+            ${{ steps.vars.outputs.tag }} has been released. 
+            Argo-workflow : quay.io/numaio/numaflow-sink/argo-workflow:${{ steps.vars.outputs.tag }}
+            Http-sink  : quay.io/numaio/numaflow-sink/http-sink:${{ steps.vars.outputs.tag }}
+            Pormetheus-Pusher: quay.io/numaio/numaflow-sink/prometheus-pusher:${{ steps.vars.outputs.tag }}
           draft: false
           prerelease: false
