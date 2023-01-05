@@ -82,9 +82,10 @@ jobs:
           tag_name: ${{ github.ref }}
           release_name: Release ${{ github.ref }}
           body: |
-            ${{ steps.vars.outputs.tag }} has been released. 
-            Argo-workflow : quay.io/numaio/numaflow-sink/argo-workflow:${{ steps.vars.outputs.tag }}
-            Http-sink  : quay.io/numaio/numaflow-sink/http-sink:${{ steps.vars.outputs.tag }}
-            Pormetheus-Pusher: quay.io/numaio/numaflow-sink/prometheus-pusher:${{ steps.vars.outputs.tag }}
+            # ${{ steps.vars.outputs.tag }} has been released. 
+            
+            ** Argo-workflow ** : [quay.io/numaio/numaflow-sink/argo-workflow:${{ steps.vars.outputs.tag }}](https://quay.io/repository/numaio/numaflow-sink/argo-workflow)
+            ** HTTP-sink **  : [quay.io/numaio/numaflow-sink/http-sink:${{ steps.vars.outputs.tag }}](https://quay.io/repository/numaio/numaflow-sink/http-sink)
+            ** Prometheus-Pusher **: [quay.io/numaio/numaflow-sink/prometheus-pusher:${{ steps.vars.outputs.tag }}](https://quay.io/repository/numaio/numaflow-sink/prometheus-pusher)
           draft: false
           prerelease: false
