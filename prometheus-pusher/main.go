@@ -100,6 +100,7 @@ func (p *prometheusSink) handle(ctx context.Context, datumList []sinksdk.Datum) 
 	}
 	err := p.push(pls)
 	if err != nil {
+		p.logger.Errorf("Failed to push the Metrics", zap.Error(err))
 		return failed
 	}
 	return ok
