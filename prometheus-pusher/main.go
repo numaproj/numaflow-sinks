@@ -21,12 +21,14 @@ const (
 	PROMETHEUS_SERVER      = "PROMETHEUS_SERVER"
 	SKIP_VALIDATION_FAILED = "SKIP_VALIDATION_FAILED"
 	METRICS_LABELS         = "METRICS_LABELS"
+	EXCLUDE_LABELS         = "EXCLUDE_LABELS"
 )
 
 type prometheusSink struct {
-	logger     *zap.SugaredLogger
-	skipFailed bool
-	labels     map[string]string
+	logger       *zap.SugaredLogger
+	skipFailed   bool
+	labels       map[string]string
+	excludeLabel []string
 }
 
 type myCollector struct {
@@ -96,6 +98,7 @@ func (p *prometheusSink) handle(ctx context.Context, datumList []sinksdk.Datum) 
 			return failed
 		}
 		pl.mergeLabels(p.labels)
+		pl.excludeLabels(p.excludeLabel)
 		pls = append(pls, pl)
 	}
 	err := p.push(pls)
@@ -142,6 +145,11 @@ func main() {
 	logger := logging.NewLogger().Named("prometheus-sink")
 	skipFailedStr := os.Getenv(SKIP_VALIDATION_FAILED)
 	labels := parseStringToMap(os.Getenv(METRICS_LABELS))
+	exLabelStr := os.Getenv(EXCLUDE_LABELS)
+	var exLabels []string
+	if exLabelStr != "" {
+		exLabels = strings.Split(exLabelStr, ",")
+	}
 
 	skipFailed := false
 	var err error
@@ -151,6 +159,6 @@ func main() {
 			panic(err)
 		}
 	}
-	ps := prometheusSink{logger: logger, skipFailed: skipFailed, labels: labels}
+	ps := prometheusSink{logger: logger, skipFailed: skipFailed, labels: labels, excludeLabel: exLabels}
 	server.New().RegisterSinker(sinksdk.SinkFunc(ps.handle)).Start(context.Background())
 }

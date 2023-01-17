@@ -22,3 +22,15 @@ func (p *Payload) mergeLabels(labels map[string]string) {
 
 	}
 }
+
+func (p *Payload) excludeLabels(labels []string) {
+	if p.Labels == nil {
+		p.Labels = make(map[string]string)
+	}
+	for _, key := range labels {
+		if _, ok := p.Labels[key]; ok {
+			delete(p.Labels, key)
+		}
+
+	}
+}
