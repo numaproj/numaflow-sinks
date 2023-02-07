@@ -18,6 +18,7 @@ import (
 
 type httpSink struct {
 	logger       *zap.SugaredLogger
+	httpClient   *http.Client
 	url          string
 	method       string
 	retries      int
@@ -39,24 +40,19 @@ func (i *arrayFlags) Set(value string) error {
 }
 
 func (hs *httpSink) sendHTTPRequest(data io.Reader) error {
-	client := &http.Client{Timeout: time.Duration(hs.timeout) * time.Second}
-	if hs.skipInsecure {
-		hs.logger.Info("Send insecure request")
-		tr := &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		}
-		client = &http.Client{Timeout: 2 * time.Second, Transport: tr}
-	}
 	req, err := http.NewRequest(hs.method, hs.url, data)
 	if err != nil {
 		return err
 	}
-	res, err := client.Do(req)
+	res, err := hs.httpClient.Do(req)
 	if err != nil {
 		return err
 	}
 	if res != nil {
-		hs.logger.Infof("Response code: %d, Response Body: %s", res.StatusCode, res.Body)
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		hs.logger.Infof("Response code: %d,", res.StatusCode)
 	}
 	return nil
 }
@@ -111,6 +107,18 @@ func main() {
 
 	// Parse the flag
 	flag.Parse()
+
+	//creating http client
+	client := &http.Client{Timeout: time.Duration(hs.timeout) * time.Second}
+	if hs.skipInsecure {
+		hs.logger.Info("Send insecure request")
+		tr := &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		}
+		client = &http.Client{Timeout: 2 * time.Second, Transport: tr}
+	}
+
+	hs.httpClient = client
 
 	hs.logger.Info("HTTP Sink starting successfully with args %v", hs)
 	server.New().RegisterSinker(sinksdk.SinkFunc(hs.handle)).Start(context.Background())
