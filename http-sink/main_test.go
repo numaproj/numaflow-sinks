@@ -13,8 +13,6 @@ import (
 func TestHttp_client(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNoContent)
-		body := make([]byte, 1)
-		w.Write(body)
 
 	}))
 	hs := httpSink{}
