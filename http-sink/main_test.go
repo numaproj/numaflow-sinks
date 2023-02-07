@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/tls"
 	"github.com/numaproj/numaflow/pkg/shared/logging"
+	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -30,9 +31,6 @@ func TestHttp_client(t *testing.T) {
 	hs.url = server.URL
 	hs.method = http.MethodPost
 	hs.logger = logging.NewLogger().Named("http-sink")
-	hs.sendHTTPRequest(nil)
-	hs.sendHTTPRequest(nil)
-	hs.sendHTTPRequest(nil)
-	hs.sendHTTPRequest(nil)
-
+	err := hs.sendHTTPRequest(nil)
+	assert.NoError(t, err)
 }
