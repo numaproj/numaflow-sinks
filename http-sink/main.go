@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
+	"errors"
 	"flag"
 	"io"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -39,10 +40,25 @@ func (i *arrayFlags) Set(value string) error {
 	return nil
 }
 
+func (hs *httpSink) createHTTPClient() {
+	//creating http client
+	client := &http.Client{Timeout: time.Duration(hs.timeout) * time.Second}
+	if hs.skipInsecure {
+		tr := &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		}
+		client.Transport = tr
+	}
+	hs.httpClient = client
+}
+
 func (hs *httpSink) sendHTTPRequest(data io.Reader) error {
 	req, err := http.NewRequest(hs.method, hs.url, data)
 	if err != nil {
 		return err
+	}
+	if hs.httpClient == nil {
+		return errors.New("HTTP Client is not initialized")
 	}
 	res, err := hs.httpClient.Do(req)
 	if err != nil {
@@ -107,19 +123,8 @@ func main() {
 
 	// Parse the flag
 	flag.Parse()
-
 	//creating http client
-	client := &http.Client{Timeout: time.Duration(hs.timeout) * time.Second}
-	if hs.skipInsecure {
-		hs.logger.Info("Send insecure request")
-		tr := &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		}
-		client = &http.Client{Timeout: 2 * time.Second, Transport: tr}
-	}
-
-	hs.httpClient = client
-
+	hs.createHTTPClient()
 	hs.logger.Info("HTTP Sink starting successfully with args %v", hs)
 	server.New().RegisterSinker(sinksdk.SinkFunc(hs.handle)).Start(context.Background())
 }
