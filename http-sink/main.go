@@ -6,6 +6,8 @@ import (
 	"crypto/tls"
 	"errors"
 	"flag"
+	"github.com/numaproj/numaflow-go/pkg/sink/server"
+	flag2 "github.com/numaproj/numaflow-sinks/shared/flag"
 	"io"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"net/http"
@@ -119,7 +121,7 @@ func (hs *httpSink) handle(ctx context.Context, datumList []sinksdk.Datum) sinks
 
 func main() {
 	var metricPort int
-	labels := MapFlag{}
+	labels := flag2.MapFlag{}
 	logger := logging.NewLogger().Named("http-sink")
 	hs := httpSink{logger: logger}
 	flag.StringVar(&hs.url, "url", "", "URL")
@@ -129,16 +131,16 @@ func main() {
 	flag.BoolVar(&hs.skipInsecure, "insecure", false, "Skip TLS verify")
 	flag.BoolVar(&hs.dropIfError, "dropIfError", false, "Messages will drop after retry")
 	flag.Var(&hs.headers, "headers", "HTTP Headers")
-	flag.IntVar(&metricPort, "metricsPort", 9090, "Metrics Port")
-	flag.Var(&labels, "metricsLabels", "Metrics Labels E.g: label=val1,label1=val2")
+	flag.IntVar(&metricPort, "udsinkMetricsPort", 9090, "UDSink Metrics Port")
+	flag.Var(&labels, "udsinkMetricsLabels", "UDSink Metrics Labels E.g: label=val1,label1=val2")
 	// Parse the flag
 	flag.Parse()
 
 	hs.metrics = NewMetricsServer(labels)
 	hs.metrics.startMetricServer(metricPort)
-	hs.logger.Infof("Metrics publisher initialized with port=%d", metricPort)
+	go hs.logger.Infof("Metrics publisher initialized with port=%d", metricPort)
 	//creating http client
 	hs.createHTTPClient()
 	hs.logger.Info("HTTP Sink starting successfully with args %v", hs)
-	//server.New().RegisterSinker(sinksdk.SinkFunc(hs.handle)).Start(context.Background())
+	server.New().RegisterSinker(sinksdk.SinkFunc(hs.handle)).Start(context.Background())
 }

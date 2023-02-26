@@ -5,6 +5,7 @@ go 1.18
 require (
 	github.com/numaproj/numaflow v0.6.0
 	github.com/numaproj/numaflow-go v0.2.3
+	github.com/numaproj/numaflow-sinks/shared v0.0.0-00010101000000-000000000000
 	github.com/prometheus/client_golang v1.12.1
 	github.com/stretchr/testify v1.8.0
 	go.uber.org/zap v1.23.0
@@ -35,3 +36,5 @@ require (
 	k8s.io/klog/v2 v2.30.0 // indirect
 	k8s.io/utils v0.0.0-20211116205334-6203023598ed // indirect
 )
+
+replace github.com/numaproj/numaflow-sinks/shared => ../shared
