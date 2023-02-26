@@ -12,7 +12,6 @@ import (
 	"time"
 
 	sinksdk "github.com/numaproj/numaflow-go/pkg/sink"
-	"github.com/numaproj/numaflow-go/pkg/sink/server"
 	"github.com/numaproj/numaflow/pkg/shared/logging"
 	"go.uber.org/zap"
 )
@@ -28,6 +27,7 @@ type httpSink struct {
 	skipInsecure bool
 	dropIfError  bool
 	headers      arrayFlags
+	metrics      *MetricsPublisher
 }
 type arrayFlags []string
 
@@ -77,6 +77,8 @@ func (hs *httpSink) handle(ctx context.Context, datumList []sinksdk.Datum) sinks
 	ok := sinksdk.ResponsesBuilder()
 	failed := sinksdk.ResponsesBuilder()
 	for _, datum := range datumList {
+		hs.metrics.IncreaseTotalCounter()
+		hs.metrics.UpdateSize(float64(len(datum.Value())))
 		//TODO Need to implemente parallel sending request
 		data := bytes.NewReader(datum.Value())
 		backoff := wait.Backoff{
@@ -85,7 +87,9 @@ func (hs *httpSink) handle(ctx context.Context, datumList []sinksdk.Datum) sinks
 			Factor:   2,
 		}
 		retryError := wait.ExponentialBackoffWithContext(ctx, backoff, func() (done bool, err error) {
+			start := time.Now()
 			err = hs.sendHTTPRequest(data)
+			hs.metrics.UpdateLatency(time.Since(start).Seconds())
 			if err != nil {
 				hs.logger.Errorf("HTTP Request failed. %v", err)
 				return false, nil
@@ -95,11 +99,14 @@ func (hs *httpSink) handle(ctx context.Context, datumList []sinksdk.Datum) sinks
 		if retryError != nil {
 			hs.logger.Errorf("HTTP Request failed. Error : %v", retryError)
 			if hs.dropIfError {
+				hs.metrics.IncreaseTotalDropped()
 				hs.logger.Warn("Dropping messages due to failure")
 				return ok
 			}
+			hs.metrics.IncreaseTotalFailed()
 			failed = failed.Append(sinksdk.ResponseFailure(datum.ID(), "failed to forward message"))
 		}
+		hs.metrics.IncreaseTotalSuccess()
 		ok = ok.Append(sinksdk.ResponseOK(datum.ID()))
 	}
 	if len(failed) > 0 {
@@ -111,6 +118,8 @@ func (hs *httpSink) handle(ctx context.Context, datumList []sinksdk.Datum) sinks
 }
 
 func main() {
+	var metricPort int
+	labels := MapFlag{}
 	logger := logging.NewLogger().Named("http-sink")
 	hs := httpSink{logger: logger}
 	flag.StringVar(&hs.url, "url", "", "URL")
@@ -120,11 +129,16 @@ func main() {
 	flag.BoolVar(&hs.skipInsecure, "insecure", false, "Skip TLS verify")
 	flag.BoolVar(&hs.dropIfError, "dropIfError", false, "Messages will drop after retry")
 	flag.Var(&hs.headers, "headers", "HTTP Headers")
-
+	flag.IntVar(&metricPort, "metricsPort", 9090, "Metrics Port")
+	flag.Var(&labels, "metricsLabels", "Metrics Labels E.g: label=val1,label1=val2")
 	// Parse the flag
 	flag.Parse()
+
+	hs.metrics = NewMetricsServer(labels)
+	hs.metrics.startMetricServer(metricPort)
+	hs.logger.Infof("Metrics publisher initialized with port=%d", metricPort)
 	//creating http client
 	hs.createHTTPClient()
 	hs.logger.Info("HTTP Sink starting successfully with args %v", hs)
-	server.New().RegisterSinker(sinksdk.SinkFunc(hs.handle)).Start(context.Background())
+	//server.New().RegisterSinker(sinksdk.SinkFunc(hs.handle)).Start(context.Background())
 }
