@@ -6,16 +6,16 @@ import (
 	"crypto/tls"
 	"errors"
 	"flag"
-	"github.com/numaproj/numaflow-go/pkg/sink/server"
-	flag2 "github.com/numaproj/numaflow-sinks/shared/flag"
 	"io"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"net/http"
 	"time"
 
 	sinksdk "github.com/numaproj/numaflow-go/pkg/sink"
+	"github.com/numaproj/numaflow-go/pkg/sink/server"
+	flag2 "github.com/numaproj/numaflow-sinks/shared/flag"
 	"github.com/numaproj/numaflow/pkg/shared/logging"
 	"go.uber.org/zap"
+	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 type httpSink struct {

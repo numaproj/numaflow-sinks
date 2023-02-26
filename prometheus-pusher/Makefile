@@ -45,7 +45,7 @@ clean:
 	-rm -rf ${CURRENT_DIR}/dist
 
 test:
-	go test -v ./server
+	go test -v
 
 $(GOPATH)/bin/golangci-lint:
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b `go env GOPATH`/bin v1.46.2
