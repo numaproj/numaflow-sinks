@@ -52,7 +52,7 @@ func (mp *MetricsPublisher) UpdateLatency(latency float64) {
 
 func (mp *MetricsPublisher) registerPayloadTotalCounter() {
 	mp.payloadTotalCounter = promauto.NewCounter(prometheus.CounterOpts{
-		Name:        "payload_total_count",
+		Name:        "total_request_count",
 		Help:        "The total number of payload events",
 		ConstLabels: mp.labels,
 	})
@@ -60,7 +60,7 @@ func (mp *MetricsPublisher) registerPayloadTotalCounter() {
 
 func (mp *MetricsPublisher) registerPayloadTotalSuccess() {
 	mp.payloadTotalSuccess = promauto.NewCounter(prometheus.CounterOpts{
-		Name:        "payload_total_success",
+		Name:        "total_request_success",
 		Help:        "The total number of success payload events",
 		ConstLabels: mp.labels,
 	})
@@ -68,7 +68,7 @@ func (mp *MetricsPublisher) registerPayloadTotalSuccess() {
 
 func (mp *MetricsPublisher) registerPayloadTotalFailed() {
 	mp.payloadTotalFailed = promauto.NewCounter(prometheus.CounterOpts{
-		Name:        "payload_total_failed",
+		Name:        "total_request_failed",
 		Help:        "The total number of failed payload events",
 		ConstLabels: mp.labels,
 	})
@@ -76,7 +76,7 @@ func (mp *MetricsPublisher) registerPayloadTotalFailed() {
 
 func (mp *MetricsPublisher) registerPayloadTotalDropped() {
 	mp.payloadTotalDropped = promauto.NewCounter(prometheus.CounterOpts{
-		Name:        "payload_total_dropped",
+		Name:        "total_request_dropped",
 		Help:        "The total number of dropped payload events",
 		ConstLabels: mp.labels,
 	})
@@ -84,7 +84,7 @@ func (mp *MetricsPublisher) registerPayloadTotalDropped() {
 
 func (mp *MetricsPublisher) registerPayloadLatency() {
 	mp.payloadLatency = promauto.NewSummary(prometheus.SummaryOpts{
-		Name:        "payload_send_latency",
+		Name:        "total_request_latency",
 		Help:        "The payload round trip duration",
 		ConstLabels: mp.labels,
 	})
@@ -92,8 +92,8 @@ func (mp *MetricsPublisher) registerPayloadLatency() {
 
 func (mp *MetricsPublisher) registerPayloadSize() {
 	mp.payloadSize = promauto.NewSummary(prometheus.SummaryOpts{
-		Name:        "payload_size",
-		Help:        "payload size",
+		Name:        "total_request_size",
+		Help:        "total request size",
 		ConstLabels: mp.labels,
 	})
 }

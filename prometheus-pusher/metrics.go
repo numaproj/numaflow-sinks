@@ -39,7 +39,7 @@ func (mp *MetricsPublisher) IncreaseTotalSkipped() {
 
 func (mp *MetricsPublisher) registerMetricsTotalPushed() {
 	mp.metricsTotalPushed = promauto.NewCounter(prometheus.CounterOpts{
-		Name:        "metrics_total_pushed",
+		Name:        "total_metrics_pushed",
 		Help:        "The total number of metrics pushed",
 		ConstLabels: mp.labels,
 	})
@@ -47,7 +47,7 @@ func (mp *MetricsPublisher) registerMetricsTotalPushed() {
 
 func (mp *MetricsPublisher) registerMetricsTotalSuccess() {
 	mp.metricsTotalSuccess = promauto.NewCounter(prometheus.CounterOpts{
-		Name:        "metrics_total_success",
+		Name:        "total_metrics_success",
 		Help:        "The total number of metrics successfully pushed",
 		ConstLabels: mp.labels,
 	})
@@ -55,7 +55,7 @@ func (mp *MetricsPublisher) registerMetricsTotalSuccess() {
 
 func (mp *MetricsPublisher) registerMetricsTotalFailed() {
 	mp.metricsTotalFailed = promauto.NewCounter(prometheus.CounterOpts{
-		Name:        "metrics_total_failed",
+		Name:        "total_metrics_failed",
 		Help:        "The total number of metrics failed push",
 		ConstLabels: mp.labels,
 	})
@@ -63,7 +63,7 @@ func (mp *MetricsPublisher) registerMetricsTotalFailed() {
 
 func (mp *MetricsPublisher) registerMetricsTotalSkipped() {
 	mp.metricsTotalSkipped = promauto.NewCounter(prometheus.CounterOpts{
-		Name:        "metrics_total_skipped",
+		Name:        "total_metrics_skipped",
 		Help:        "The total number of metrics skipped",
 		ConstLabels: mp.labels,
 	})
