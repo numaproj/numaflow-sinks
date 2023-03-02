@@ -91,7 +91,7 @@ func (hs *httpSink) handle(ctx context.Context, datumList []sinksdk.Datum) sinks
 		retryError := wait.ExponentialBackoffWithContext(ctx, backoff, func() (done bool, err error) {
 			start := time.Now()
 			err = hs.sendHTTPRequest(data)
-			hs.metrics.UpdateLatency(time.Since(start).Seconds())
+			hs.metrics.UpdateLatency(float64(time.Since(start).Milliseconds()))
 			if err != nil {
 				hs.logger.Errorf("HTTP Request failed. %v", err)
 				return false, nil
