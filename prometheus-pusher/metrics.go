@@ -2,26 +2,49 @@ package main
 
 import (
 	"fmt"
+	"net/http"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"net/http"
 )
 
 type MetricsPublisher struct {
-	metricsTotalPushed  prometheus.Counter
-	metricsTotalSuccess prometheus.Counter
-	metricsTotalFailed  prometheus.Counter
-	metricsTotalSkipped prometheus.Counter
-	labels              map[string]string
+	metricsTotalPushed      prometheus.Counter
+	metricsTotalSuccess     prometheus.Counter
+	metricsTotalFailed      prometheus.Counter
+	metricsTotalSkipped     prometheus.Counter
+	metricsAnomalyGenerated *prometheus.CounterVec
+	labels                  map[string]string
 }
 
 func (mp *MetricsPublisher) registerMertics() {
-	mp.registerMetricsTotalPushed()
-	mp.registerMetricsTotalSuccess()
-	mp.registerMetricsTotalFailed()
-	mp.registerMetricsTotalSkipped()
+	mp.metricsTotalPushed = promauto.NewCounter(prometheus.CounterOpts{
+		Name:        "total_metrics_pushed",
+		Help:        "The total number of metrics pushed",
+		ConstLabels: mp.labels,
+	})
+	mp.metricsTotalSuccess = promauto.NewCounter(prometheus.CounterOpts{
+		Name:        "total_metrics_success",
+		Help:        "The total number of metrics successfully pushed",
+		ConstLabels: mp.labels,
+	})
+	mp.metricsTotalFailed = promauto.NewCounter(prometheus.CounterOpts{
+		Name:        "total_metrics_failed",
+		Help:        "The total number of metrics failed push",
+		ConstLabels: mp.labels,
+	})
+	mp.metricsTotalSkipped = promauto.NewCounter(prometheus.CounterOpts{
+		Name:        "total_metrics_skipped",
+		Help:        "The total number of metrics skipped",
+		ConstLabels: mp.labels,
+	})
 
+	mp.metricsAnomalyGenerated = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name:        "total_anomaly_generated",
+		Help:        "The total count of anomaly score generator",
+		ConstLabels: mp.labels,
+	}, []string{"namespace", "app", "metrics"})
 }
 
 func (mp *MetricsPublisher) IncreaseTotalPushed() {
@@ -37,37 +60,10 @@ func (mp *MetricsPublisher) IncreaseTotalSkipped() {
 	mp.metricsTotalSkipped.Inc()
 }
 
-func (mp *MetricsPublisher) registerMetricsTotalPushed() {
-	mp.metricsTotalPushed = promauto.NewCounter(prometheus.CounterOpts{
-		Name:        "total_metrics_pushed",
-		Help:        "The total number of metrics pushed",
-		ConstLabels: mp.labels,
-	})
+func (mp *MetricsPublisher) IncreaseAnomalyGenerated(namespace, app, metricName string) {
+	mp.metricsAnomalyGenerated.WithLabelValues(namespace, app, metricName).Inc()
 }
 
-func (mp *MetricsPublisher) registerMetricsTotalSuccess() {
-	mp.metricsTotalSuccess = promauto.NewCounter(prometheus.CounterOpts{
-		Name:        "total_metrics_success",
-		Help:        "The total number of metrics successfully pushed",
-		ConstLabels: mp.labels,
-	})
-}
-
-func (mp *MetricsPublisher) registerMetricsTotalFailed() {
-	mp.metricsTotalFailed = promauto.NewCounter(prometheus.CounterOpts{
-		Name:        "total_metrics_failed",
-		Help:        "The total number of metrics failed push",
-		ConstLabels: mp.labels,
-	})
-}
-
-func (mp *MetricsPublisher) registerMetricsTotalSkipped() {
-	mp.metricsTotalSkipped = promauto.NewCounter(prometheus.CounterOpts{
-		Name:        "total_metrics_skipped",
-		Help:        "The total number of metrics skipped",
-		ConstLabels: mp.labels,
-	})
-}
 func NewMetricsServer(labels map[string]string) *MetricsPublisher {
 	metricsPublisher := &MetricsPublisher{}
 	metricsPublisher.labels = labels

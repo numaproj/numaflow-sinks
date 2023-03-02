@@ -19,15 +19,37 @@ type MetricsPublisher struct {
 }
 
 func (mp *MetricsPublisher) registerMertics() {
-	mp.registerPayloadTotalCounter()
-	mp.registerPayloadTotalSuccess()
-	mp.registerPayloadTotalFailed()
-	mp.registerPayloadTotalDropped()
-	mp.registerPayloadSize()
-	mp.registerPayloadLatency()
-
+	mp.payloadTotalCounter = promauto.NewCounter(prometheus.CounterOpts{
+		Name:        "total_request_count",
+		Help:        "The total number of payload events",
+		ConstLabels: mp.labels,
+	})
+	mp.payloadTotalSuccess = promauto.NewCounter(prometheus.CounterOpts{
+		Name:        "total_request_success",
+		Help:        "The total number of success payload events",
+		ConstLabels: mp.labels,
+	})
+	mp.payloadTotalFailed = promauto.NewCounter(prometheus.CounterOpts{
+		Name:        "total_request_failed",
+		Help:        "The total number of failed payload events",
+		ConstLabels: mp.labels,
+	})
+	mp.payloadTotalDropped = promauto.NewCounter(prometheus.CounterOpts{
+		Name:        "total_request_dropped",
+		Help:        "The total number of dropped payload events",
+		ConstLabels: mp.labels,
+	})
+	mp.payloadLatency = promauto.NewSummary(prometheus.SummaryOpts{
+		Name:        "total_request_latency",
+		Help:        "The payload round trip duration",
+		ConstLabels: mp.labels,
+	})
+	mp.payloadSize = promauto.NewSummary(prometheus.SummaryOpts{
+		Name:        "total_request_size",
+		Help:        "total request size",
+		ConstLabels: mp.labels,
+	})
 }
-
 func (mp *MetricsPublisher) IncreaseTotalCounter() {
 	mp.payloadTotalCounter.Inc()
 }
@@ -41,61 +63,11 @@ func (mp *MetricsPublisher) IncreaseTotalFailed() {
 func (mp *MetricsPublisher) IncreaseTotalDropped() {
 	mp.payloadTotalDropped.Inc()
 }
-
 func (mp *MetricsPublisher) UpdateSize(size float64) {
 	mp.payloadSize.Observe(size)
 }
-
 func (mp *MetricsPublisher) UpdateLatency(latency float64) {
 	mp.payloadLatency.Observe(latency)
-}
-
-func (mp *MetricsPublisher) registerPayloadTotalCounter() {
-	mp.payloadTotalCounter = promauto.NewCounter(prometheus.CounterOpts{
-		Name:        "total_request_count",
-		Help:        "The total number of payload events",
-		ConstLabels: mp.labels,
-	})
-}
-
-func (mp *MetricsPublisher) registerPayloadTotalSuccess() {
-	mp.payloadTotalSuccess = promauto.NewCounter(prometheus.CounterOpts{
-		Name:        "total_request_success",
-		Help:        "The total number of success payload events",
-		ConstLabels: mp.labels,
-	})
-}
-
-func (mp *MetricsPublisher) registerPayloadTotalFailed() {
-	mp.payloadTotalFailed = promauto.NewCounter(prometheus.CounterOpts{
-		Name:        "total_request_failed",
-		Help:        "The total number of failed payload events",
-		ConstLabels: mp.labels,
-	})
-}
-
-func (mp *MetricsPublisher) registerPayloadTotalDropped() {
-	mp.payloadTotalDropped = promauto.NewCounter(prometheus.CounterOpts{
-		Name:        "total_request_dropped",
-		Help:        "The total number of dropped payload events",
-		ConstLabels: mp.labels,
-	})
-}
-
-func (mp *MetricsPublisher) registerPayloadLatency() {
-	mp.payloadLatency = promauto.NewSummary(prometheus.SummaryOpts{
-		Name:        "total_request_latency",
-		Help:        "The payload round trip duration",
-		ConstLabels: mp.labels,
-	})
-}
-
-func (mp *MetricsPublisher) registerPayloadSize() {
-	mp.payloadSize = promauto.NewSummary(prometheus.SummaryOpts{
-		Name:        "total_request_size",
-		Help:        "total request size",
-		ConstLabels: mp.labels,
-	})
 }
 func NewMetricsServer(labels map[string]string) *MetricsPublisher {
 	metricsPublisher := &MetricsPublisher{}

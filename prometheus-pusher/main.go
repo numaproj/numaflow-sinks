@@ -71,6 +71,8 @@ func (p *prometheusSink) push(msgPayloads []Payload) error {
 					metricType: prometheus.GaugeValue,
 					value:      payload.Value,
 				})
+				appName := payload.Labels["app"]
+				p.metrics.IncreaseAnomalyGenerated(payload.Namespace, appName, payload.Name)
 				keys[payload.Name] = true
 			}
 			err = pusher.Push()
