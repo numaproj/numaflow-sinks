@@ -7,6 +7,7 @@ require (
 	github.com/antonmedv/expr v1.9.0
 	github.com/numaproj/numaflow v0.6.3
 	github.com/numaproj/numaflow-go v0.2.4
+	github.com/numaproj/numaflow-sinks/shared v0.0.0-20230302060503-011ab70875eb
 	github.com/prometheus/client_golang v1.14.0
 	github.com/stretchr/testify v1.8.1
 	go.uber.org/zap v1.23.0
@@ -42,7 +43,3 @@ require (
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
-
-require github.com/numaproj/numaflow-sinks/shared v0.0.0-00010101000000-000000000000
-
-replace github.com/numaproj/numaflow-sinks/shared => ../shared
