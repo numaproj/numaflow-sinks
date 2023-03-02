@@ -198,6 +198,8 @@ github.com/numaproj/numaflow v0.6.0 h1:W6UF9A0mE+3EDopCDvY7Ji8K8zK3rSd5m04CpGvYQ
 github.com/numaproj/numaflow v0.6.0/go.mod h1:RyerSgXaBcWObYDyv46PuTFuyArmgr7acFQr3LUmSNQ=
 github.com/numaproj/numaflow-go v0.2.3 h1:DDyLK6SehUmXUq/RwQemawPd3TfXqJLepA1fwYUrN0U=
 github.com/numaproj/numaflow-go v0.2.3/go.mod h1:jwhmgurhkWs3YMzpPPl4qXf3OohdE18jc0YKM7Ux2iQ=
+github.com/numaproj/numaflow-sinks/shared v0.0.0-20230302060503-011ab70875eb h1:LtstVGRSlh5fMw3uIhcG5H2Xn8JtLBRchyLmvMFrJrU=
+github.com/numaproj/numaflow-sinks/shared v0.0.0-20230302060503-011ab70875eb/go.mod h1:PCO+ujaf5fzWKU09FXtVCPfkdLC4ddysoo32j8y2crI=
 github.com/nxadm/tail v1.4.4/go.mod h1:kenIhsEOeOJmVchQTgglprH7qJGnHDVpk1VPCcaMI8A=
 github.com/onsi/ginkgo v0.0.0-20170829012221-11459a886d9c/go.mod h1:lLunBs/Ym6LB5Z9jYTR76FiuTmxDTDusOGeTQH+WWjE=
 github.com/onsi/ginkgo v1.6.0/go.mod h1:lLunBs/Ym6LB5Z9jYTR76FiuTmxDTDusOGeTQH+WWjE=
