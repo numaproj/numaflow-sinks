@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"os"
 	"strconv"
@@ -11,6 +12,7 @@ import (
 
 	sinksdk "github.com/numaproj/numaflow-go/pkg/sink"
 	"github.com/numaproj/numaflow-go/pkg/sink/server"
+	numaflag "github.com/numaproj/numaflow-sinks/shared/flag"
 	"github.com/numaproj/numaflow/pkg/shared/logging"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/push"
@@ -27,6 +29,7 @@ type prometheusSink struct {
 	logger     *zap.SugaredLogger
 	skipFailed bool
 	labels     map[string]string
+	metrics    *MetricsPublisher
 }
 
 type myCollector struct {
@@ -68,13 +71,17 @@ func (p *prometheusSink) push(msgPayloads []Payload) error {
 					metricType: prometheus.GaugeValue,
 					value:      payload.Value,
 				})
+				appName := payload.Labels["app"]
+				p.metrics.IncreaseAnomalyGenerated(payload.Namespace, appName, payload.Name)
 				keys[payload.Name] = true
 			}
 			err = pusher.Push()
 			if err != nil {
 				return err
 			}
+			p.metrics.IncreaseTotalSuccess()
 		}
+
 	}
 	return nil
 }
@@ -90,9 +97,11 @@ func (p *prometheusSink) handle(ctx context.Context, datumList []sinksdk.Datum) 
 	}
 	var pls []Payload
 	for _, payloadMsg := range payloads {
+		p.metrics.IncreaseTotalPushed()
 		var pl Payload
 		err := json.Unmarshal([]byte(payloadMsg), &pl)
 		if !p.skipFailed && err != nil {
+			p.metrics.IncreaseTotalSkipped()
 			return failed
 		}
 		pl.mergeLabels(p.labels)
@@ -100,9 +109,11 @@ func (p *prometheusSink) handle(ctx context.Context, datumList []sinksdk.Datum) 
 	}
 	err := p.push(pls)
 	if err != nil {
+		p.metrics.IncreaseTotalFailed()
 		p.logger.Errorf("Failed to push the Metrics", zap.Error(err))
 		return failed
 	}
+	p.metrics.IncreaseTotalSuccess()
 	return ok
 }
 
@@ -142,7 +153,13 @@ func main() {
 	logger := logging.NewLogger().Named("prometheus-sink")
 	skipFailedStr := os.Getenv(SKIP_VALIDATION_FAILED)
 	labels := parseStringToMap(os.Getenv(METRICS_LABELS))
+	var metricPort int
+	meticslabels := numaflag.MapFlag{}
 
+	flag.IntVar(&metricPort, "udsinkMetricsPort", 9090, "Metrics Port")
+	flag.Var(&meticslabels, "udsinkMetricsLabels", "Sink Metrics Labels E.g: label=val1,label1=val2")
+	// Parse the flag
+	flag.Parse()
 	skipFailed := false
 	var err error
 	if skipFailedStr != "" {
@@ -151,6 +168,11 @@ func main() {
 			panic(err)
 		}
 	}
+
 	ps := prometheusSink{logger: logger, skipFailed: skipFailed, labels: labels}
+	ps.metrics = NewMetricsServer(labels)
+	go ps.metrics.startMetricServer(metricPort)
+	ps.logger.Infof("Metrics publisher initialized with port=%d", metricPort)
+
 	server.New().RegisterSinker(sinksdk.SinkFunc(ps.handle)).Start(context.Background())
 }
