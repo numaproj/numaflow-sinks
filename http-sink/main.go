@@ -137,8 +137,8 @@ func main() {
 	flag.Parse()
 
 	hs.metrics = NewMetricsServer(labels)
-	hs.metrics.startMetricServer(metricPort)
-	go hs.logger.Infof("Metrics publisher initialized with port=%d", metricPort)
+	go hs.metrics.startMetricServer(metricPort)
+	hs.logger.Infof("Metrics publisher initialized with port=%d", metricPort)
 	//creating http client
 	hs.createHTTPClient()
 	hs.logger.Info("HTTP Sink starting successfully with args %v", hs)
