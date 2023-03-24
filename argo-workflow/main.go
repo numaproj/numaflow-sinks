@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-
 	"os"
 	"strconv"
 	"strings"
@@ -88,12 +87,12 @@ func (as *argoWfSink) submitWorkflow(param string) error {
 	return nil
 }
 
-func (as *argoWfSink) handle(ctx context.Context, datumList []sinksdk.Datum) sinksdk.Responses {
+func (as *argoWfSink) handle(ctx context.Context, datumStreamCh <-chan sinksdk.Datum) sinksdk.Responses {
 	ok := sinksdk.ResponsesBuilder()
 	failed := sinksdk.ResponsesBuilder()
 	var payloads []string
 
-	for _, datum := range datumList {
+	for datum := range datumStreamCh {
 		if len(as.dedupKeys) > 0 {
 			key, err := as.getKey(datum.Value())
 			if err != nil {

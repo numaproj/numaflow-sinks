@@ -75,10 +75,10 @@ func (hs *httpSink) sendHTTPRequest(data io.Reader) error {
 	return nil
 }
 
-func (hs *httpSink) handle(ctx context.Context, datumList []sinksdk.Datum) sinksdk.Responses {
+func (hs *httpSink) handle(ctx context.Context, datumStreamCh <-chan sinksdk.Datum) sinksdk.Responses {
 	ok := sinksdk.ResponsesBuilder()
 	failed := sinksdk.ResponsesBuilder()
-	for _, datum := range datumList {
+	for datum := range datumStreamCh {
 		hs.metrics.IncreaseTotalCounter()
 		hs.metrics.UpdateSize(float64(len(datum.Value())))
 		//TODO Need to implemente parallel sending request
