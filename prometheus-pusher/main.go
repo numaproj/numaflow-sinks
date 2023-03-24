@@ -86,11 +86,11 @@ func (p *prometheusSink) push(msgPayloads []Payload) error {
 	return nil
 }
 
-func (p *prometheusSink) handle(ctx context.Context, datumList []sinksdk.Datum) sinksdk.Responses {
+func (p *prometheusSink) handle(ctx context.Context, datumStreamCh <-chan sinksdk.Datum) sinksdk.Responses {
 	ok := sinksdk.ResponsesBuilder()
 	failed := sinksdk.ResponsesBuilder()
 	var payloads []string
-	for _, datum := range datumList {
+	for datum := range datumStreamCh {
 		payloads = append(payloads, string(datum.Value()))
 		ok = ok.Append(sinksdk.ResponseOK(datum.ID()))
 		failed = failed.Append(sinksdk.ResponseFailure(datum.ID(), "failed to push the metrics"))
