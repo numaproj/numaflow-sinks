@@ -56,7 +56,7 @@ func (c *myCollector) Collect(ch chan<- prometheus.Metric) {
 
 func (p *prometheusSink) push(msgPayloads []Payload) error {
 	for _, payload := range msgPayloads {
-		p.logger.Debug("Pushing Payload ", zap.Any("payload", payload))
+		p.logger.Debugw("Pushing Payload ", zap.Any("payload", payload))
 		pusher, err := p.createPusher(fmt.Sprintf("%s_%s_%s", payload.Namespace, payload.Subsystem, payload.Name))
 		if err != nil {
 			return err
@@ -71,13 +71,16 @@ func (p *prometheusSink) push(msgPayloads []Payload) error {
 			})
 			appName := payload.Labels["app"]
 			p.metrics.IncreaseAnomalyGenerated(payload.Namespace, appName, payload.Name)
+		default:
+			p.logger.Errorw("Unsupported Metrics Type", zap.Any("payload", payload))
+			return fmt.Errorf("unsupported Metrics Type")
 		}
 		err = pusher.Push()
 		if err != nil {
-			p.logger.Error("Failed to push", zap.Any("payload", payload), zap.Error(err))
+			p.logger.Errorw("Failed to push", zap.Any("payload", payload), zap.Error(err))
 			return err
 		}
-		p.logger.Info("Successfully pushed", zap.Any("payload", payload))
+		p.logger.Infow("Successfully pushed", zap.Any("payload", payload))
 		p.metrics.IncreaseTotalSuccess()
 
 	}
