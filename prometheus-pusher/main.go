@@ -56,7 +56,7 @@ func (c *myCollector) Collect(ch chan<- prometheus.Metric) {
 
 func (p *prometheusSink) push(msgPayloads []Payload) error {
 	for _, payload := range msgPayloads {
-		p.logger.Infof("Pushing : %v", payload)
+		p.logger.Debug("Pushing Payload ", zap.Any("payload", payload))
 		pusher, err := p.createPusher(fmt.Sprintf("%s_%s_%s", payload.Namespace, payload.Subsystem, payload.Name))
 		if err != nil {
 			return err
@@ -74,10 +74,10 @@ func (p *prometheusSink) push(msgPayloads []Payload) error {
 		}
 		err = pusher.Push()
 		if err != nil {
-			p.logger.Infof("Failed to push: %v error: %v", payload, err)
+			p.logger.Error("Failed to push", zap.Any("payload", payload), zap.Error(err))
 			return err
 		}
-		p.logger.Infof("Successfully pushed: %v", payload)
+		p.logger.Info("Successfully pushed", zap.Any("payload", payload))
 		p.metrics.IncreaseTotalSuccess()
 
 	}
