@@ -55,32 +55,33 @@ func (c *myCollector) Collect(ch chan<- prometheus.Metric) {
 }
 
 func (p *prometheusSink) push(msgPayloads []Payload) error {
-	keys := make(map[string]bool)
-
 	for _, payload := range msgPayloads {
-		if _, ok := keys[payload.Name]; !ok {
-			pusher, err := p.createPusher(fmt.Sprintf("%s_%s_%s", payload.Namespace, payload.Subsystem, payload.Name))
-			if err != nil {
-				return err
-			}
-			switch payload.Type {
-			case "Gauge":
-				p.logger.Debugf("Creating Collector %s", payload.Name)
-				pusher = pusher.Collector(&myCollector{
-					metric:     prometheus.NewDesc(payload.Name, "", nil, payload.Labels),
-					metricType: prometheus.GaugeValue,
-					value:      payload.Value,
-				})
-				appName := payload.Labels["app"]
-				p.metrics.IncreaseAnomalyGenerated(payload.Namespace, appName, payload.Name)
-				keys[payload.Name] = true
-			}
-			err = pusher.Push()
-			if err != nil {
-				return err
-			}
-			p.metrics.IncreaseTotalSuccess()
+		p.logger.Debugw("Pushing Payload ", zap.Any("payload", payload))
+		pusher, err := p.createPusher(fmt.Sprintf("%s_%s_%s", payload.Namespace, payload.Subsystem, payload.Name))
+		if err != nil {
+			return err
 		}
+		switch payload.Type {
+		case "Gauge":
+			p.logger.Debugf("Creating Collector %s", payload.Name)
+			pusher = pusher.Collector(&myCollector{
+				metric:     prometheus.NewDesc(payload.Name, "", nil, payload.Labels),
+				metricType: prometheus.GaugeValue,
+				value:      payload.Value,
+			})
+			appName := payload.Labels["app"]
+			p.metrics.IncreaseAnomalyGenerated(payload.Namespace, appName, payload.Name)
+		default:
+			p.logger.Errorw("Unsupported Metrics Type", zap.Any("payload", payload))
+			return fmt.Errorf("unsupported Metrics Type")
+		}
+		err = pusher.Push()
+		if err != nil {
+			p.logger.Errorw("Failed to push", zap.Any("payload", payload), zap.Error(err))
+			return err
+		}
+		p.logger.Infow("Successfully pushed", zap.Any("payload", payload))
+		p.metrics.IncreaseTotalSuccess()
 
 	}
 	return nil
