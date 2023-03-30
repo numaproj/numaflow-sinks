@@ -65,10 +65,14 @@ func (p *prometheusSink) push(msgPayloads []Payload) error {
 		case "Gauge":
 			p.logger.Debugf("Creating Collector %s", payload.Name)
 			pusher = pusher.Collector(&myCollector{
-				metric:     prometheus.NewDesc(payload.Name, "", nil, payload.Labels),
+				metric:     prometheus.NewDesc(payload.Name, "", nil, nil),
 				metricType: prometheus.GaugeValue,
 				value:      payload.Value,
 			})
+
+			for key, value := range payload.Labels {
+				pusher.Grouping(key, value)
+			}
 			appName := payload.Labels["app"]
 			p.metrics.IncreaseAnomalyGenerated(payload.Namespace, appName, payload.Name)
 		default:
