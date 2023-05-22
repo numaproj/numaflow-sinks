@@ -5,8 +5,8 @@ go 1.18
 require (
 	github.com/Masterminds/sprig/v3 v3.2.2
 	github.com/antonmedv/expr v1.9.0
-	github.com/numaproj/numaflow v0.7.2
-	github.com/numaproj/numaflow-go v0.3.4
+	github.com/numaproj/numaflow v0.8.0
+	github.com/numaproj/numaflow-go v0.4.5
 	github.com/numaproj/numaflow-sinks/shared v0.0.0-20230302175848-bf7b9cf08aab
 	github.com/prometheus/client_golang v1.14.0
 	github.com/prometheus/client_model v0.3.0
@@ -34,7 +34,7 @@ require (
 	github.com/spf13/cast v1.4.1 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.10.0 // indirect
-	golang.org/x/crypto v0.0.0-20220829220503-c86fa9a7ed90 // indirect
+	golang.org/x/crypto v0.5.0 // indirect
 	golang.org/x/net v0.8.0 // indirect
 	golang.org/x/sys v0.6.0 // indirect
 	golang.org/x/text v0.8.0 // indirect

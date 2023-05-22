@@ -3,8 +3,8 @@ module github.com/numaproj/numaflow-sinks/argoworkflow
 go 1.18
 
 require (
-	github.com/numaproj/numaflow v0.7.2
-	github.com/numaproj/numaflow-go v0.3.4
+	github.com/numaproj/numaflow v0.8.0
+	github.com/numaproj/numaflow-go v0.4.5
 	github.com/numaproj/numaflow-sinks/shared v0.0.0-20230302175848-bf7b9cf08aab
 	github.com/prometheus/client_golang v1.14.0
 	github.com/stretchr/testify v1.8.0
