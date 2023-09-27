@@ -5,13 +5,13 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"strconv"
 	"strings"
 	"time"
 
-	sinksdk "github.com/numaproj/numaflow-go/pkg/sink"
-	"github.com/numaproj/numaflow-go/pkg/sink/server"
+	sinksdk "github.com/numaproj/numaflow-go/pkg/sinker"
 	numaflag "github.com/numaproj/numaflow-sinks/shared/flag"
 	"github.com/numaproj/numaflow/pkg/shared/logging"
 	"github.com/prometheus/client_golang/prometheus"
@@ -45,7 +45,6 @@ func (c *myCollector) Describe(ch chan<- *prometheus.Desc) {
 
 func (c *myCollector) Collect(ch chan<- prometheus.Metric) {
 	var metric prometheus.Metric
-
 	if c.ts.IsZero() {
 		metric = prometheus.MustNewConstMetric(c.metric, c.metricType, c.value)
 	} else {
@@ -68,6 +67,7 @@ func (p *prometheusSink) push(msgPayloads []Payload) error {
 				metric:     prometheus.NewDesc(payload.Name, "", nil, nil),
 				metricType: prometheus.GaugeValue,
 				value:      payload.Value,
+				ts:         time.UnixMilli(payload.TimestampMs),
 			})
 
 			for key, value := range payload.Labels {
@@ -91,7 +91,7 @@ func (p *prometheusSink) push(msgPayloads []Payload) error {
 	return nil
 }
 
-func (p *prometheusSink) handle(ctx context.Context, datumStreamCh <-chan sinksdk.Datum) sinksdk.Responses {
+func (p *prometheusSink) Sink(ctx context.Context, datumStreamCh <-chan sinksdk.Datum) sinksdk.Responses {
 	ok := sinksdk.ResponsesBuilder()
 	failed := sinksdk.ResponsesBuilder()
 	var payloads []string
@@ -179,5 +179,8 @@ func main() {
 	go ps.metrics.startMetricServer(metricPort)
 	ps.logger.Infof("Metrics publisher initialized with port=%d", metricPort)
 
-	server.New().RegisterSinker(sinksdk.SinkFunc(ps.handle)).Start(context.Background())
+	err = sinksdk.NewServer(&prometheusSink{}).Start(context.Background())
+	if err != nil {
+		log.Panic("Failed to start sink function server: ", err)
+	}
 }
