@@ -26,10 +26,11 @@ const (
 )
 
 type prometheusSink struct {
-	logger     *zap.SugaredLogger
-	skipFailed bool
-	labels     map[string]string
-	metrics    *MetricsPublisher
+	logger          *zap.SugaredLogger
+	skipFailed      bool
+	labels          map[string]string
+	metrics         *MetricsPublisher
+	ignoreMetricsTs bool
 }
 
 type myCollector struct {
@@ -63,12 +64,20 @@ func (p *prometheusSink) push(msgPayloads []Payload) error {
 		switch payload.Type {
 		case "Gauge":
 			p.logger.Debugf("Creating Collector %s", payload.Name)
-			pusher = pusher.Collector(&myCollector{
-				metric:     prometheus.NewDesc(payload.Name, "", nil, nil),
-				metricType: prometheus.GaugeValue,
-				value:      payload.Value,
-				ts:         time.UnixMilli(payload.TimestampMs),
-			})
+			if p.ignoreMetricsTs {
+				pusher = pusher.Collector(&myCollector{
+					metric:     prometheus.NewDesc(payload.Name, "", nil, nil),
+					metricType: prometheus.GaugeValue,
+					value:      payload.Value,
+				})
+			} else {
+				pusher = pusher.Collector(&myCollector{
+					metric:     prometheus.NewDesc(payload.Name, "", nil, nil),
+					metricType: prometheus.GaugeValue,
+					value:      payload.Value,
+					ts:         time.UnixMilli(payload.TimestampMs),
+				})
+			}
 
 			for key, value := range payload.Labels {
 				pusher.Grouping(key, value)
@@ -159,8 +168,10 @@ func main() {
 	skipFailedStr := os.Getenv(SKIP_VALIDATION_FAILED)
 	labels := parseStringToMap(os.Getenv(METRICS_LABELS))
 	var metricPort int
+	var ignoreMetricsTs bool
 	meticslabels := numaflag.MapFlag{}
 
+	flag.BoolVar(&ignoreMetricsTs, "ignoreMetricsTs", true, "Ignore Metrics Timestamp")
 	flag.IntVar(&metricPort, "udsinkMetricsPort", 9090, "Metrics Port")
 	flag.Var(&meticslabels, "udsinkMetricsLabels", "Sink Metrics Labels E.g: label=val1,label1=val2")
 	// Parse the flag
@@ -174,12 +185,11 @@ func main() {
 		}
 	}
 
-	ps := prometheusSink{logger: logger, skipFailed: skipFailed, labels: labels}
+	ps := prometheusSink{logger: logger, skipFailed: skipFailed, labels: labels, ignoreMetricsTs: ignoreMetricsTs}
 	ps.metrics = NewMetricsServer(labels)
 	go ps.metrics.startMetricServer(metricPort)
 	ps.logger.Infof("Metrics publisher initialized with port=%d", metricPort)
-
-	err = sinksdk.NewServer(&prometheusSink{}).Start(context.Background())
+	err = sinksdk.NewServer(&ps).Start(context.Background())
 	if err != nil {
 		log.Panic("Failed to start sink function server: ", err)
 	}
