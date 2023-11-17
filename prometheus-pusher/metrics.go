@@ -74,6 +74,5 @@ func NewMetricsServer(labels map[string]string) *MetricsPublisher {
 func (mp *MetricsPublisher) startMetricServer(port int) error {
 	address := fmt.Sprintf(":%d", port)
 	http.Handle("/metrics", promhttp.Handler())
-	http.ListenAndServe(address, nil)
-	return nil
+	return http.ListenAndServe(address, nil)
 }
