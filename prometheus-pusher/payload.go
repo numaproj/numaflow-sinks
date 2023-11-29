@@ -57,9 +57,6 @@ func (op *OriginalPayload) ConvertToPrometheusPayload(metricName string) *Promet
 			labels[key] = fmt.Sprintf("%s", val)
 		}
 	}
-	fmt.Println("original", *op)
-	fmt.Println("Metrics Name:", metricName)
-
 	namespace := op.Metadata["namespace"]
 	if namespace == nil {
 		namespace = ""
@@ -73,7 +70,6 @@ func (op *OriginalPayload) ConvertToPrometheusPayload(metricName string) *Promet
 		Value:       value,
 		Labels:      labels,
 	}
-	fmt.Println("Prometheus Payload", payload)
 	return payload
 
 }
