@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	numaflag "github.com/numaproj/numaflow-sinks/shared/flag"
+	"github.com/numaproj/numaflow/pkg/shared/logging"
 	"log"
 	"os"
 	"strconv"
@@ -12,8 +14,6 @@ import (
 	"time"
 
 	sinksdk "github.com/numaproj/numaflow-go/pkg/sinker"
-	numaflag "github.com/numaproj/numaflow-sinks/shared/flag"
-	"github.com/numaproj/numaflow/pkg/shared/logging"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/push"
 	"go.uber.org/zap"
@@ -23,14 +23,17 @@ const (
 	PROMETHEUS_SERVER      = "PROMETHEUS_SERVER"
 	SKIP_VALIDATION_FAILED = "SKIP_VALIDATION_FAILED"
 	METRICS_LABELS         = "METRICS_LABELS"
+	METRICS_NAME           = "METRICS_NAME"
 )
 
 type prometheusSink struct {
-	logger          *zap.SugaredLogger
-	skipFailed      bool
-	labels          map[string]string
-	metrics         *MetricsPublisher
-	ignoreMetricsTs bool
+	logger               *zap.SugaredLogger
+	skipFailed           bool
+	labels               map[string]string
+	metrics              *MetricsPublisher
+	ignoreMetricsTs      bool
+	metricsName          string
+	enableMsgTransformer bool
 }
 
 type myCollector struct {
@@ -54,9 +57,9 @@ func (c *myCollector) Collect(ch chan<- prometheus.Metric) {
 	ch <- metric
 }
 
-func (p *prometheusSink) push(msgPayloads []Payload) error {
+func (p *prometheusSink) push(msgPayloads []PrometheusPayload) error {
 	for _, payload := range msgPayloads {
-		p.logger.Debugw("Pushing Payload ", zap.Any("payload", payload))
+		p.logger.Debugw("Pushing PrometheusPayload ", zap.Any("payload", payload))
 		pusher, err := p.createPusher(fmt.Sprintf("%s_%s_%s", payload.Namespace, payload.Subsystem, payload.Name))
 		if err != nil {
 			return err
@@ -109,17 +112,28 @@ func (p *prometheusSink) Sink(ctx context.Context, datumStreamCh <-chan sinksdk.
 		ok = ok.Append(sinksdk.ResponseOK(datum.ID()))
 		failed = failed.Append(sinksdk.ResponseFailure(datum.ID(), "failed to push the metrics"))
 	}
-	var pls []Payload
+	var pls []PrometheusPayload
+	var prometheusPayload PrometheusPayload
 	for _, payloadMsg := range payloads {
 		p.metrics.IncreaseTotalPushed()
-		var pl Payload
-		err := json.Unmarshal([]byte(payloadMsg), &pl)
-		if !p.skipFailed && err != nil {
-			p.metrics.IncreaseTotalSkipped()
-			return failed
+		if p.enableMsgTransformer {
+			var opl OriginalPayload
+			err := json.Unmarshal([]byte(payloadMsg), &opl)
+			if !p.skipFailed && err != nil {
+				p.metrics.IncreaseTotalSkipped()
+				return failed
+			}
+			prometheusPayload = *opl.ConvertToPrometheusPayload(p.metricsName)
+		} else {
+			err := json.Unmarshal([]byte(payloadMsg), &prometheusPayload)
+			if !p.skipFailed && err != nil {
+				p.metrics.IncreaseTotalSkipped()
+				return failed
+			}
 		}
-		pl.mergeLabels(p.labels)
-		pls = append(pls, pl)
+
+		prometheusPayload.mergeLabels(p.labels)
+		pls = append(pls, prometheusPayload)
 	}
 	err := p.push(pls)
 	if err != nil {
@@ -167,10 +181,15 @@ func main() {
 	logger := logging.NewLogger().Named("prometheus-sink")
 	skipFailedStr := os.Getenv(SKIP_VALIDATION_FAILED)
 	labels := parseStringToMap(os.Getenv(METRICS_LABELS))
+	metricName := os.Getenv(METRICS_NAME)
+	if metricName == "" {
+		metricName = "namespace_app_rollouts_unified_anomaly"
+	}
 	var metricPort int
-	var ignoreMetricsTs bool
+	var ignoreMetricsTs, enableMsgTransformer bool
 	meticslabels := numaflag.MapFlag{}
 
+	flag.BoolVar(&enableMsgTransformer, "enableMsgTransformer", false, "Enable Prometheus message Transformer")
 	flag.BoolVar(&ignoreMetricsTs, "ignoreMetricsTs", true, "Ignore Metrics Timestamp")
 	flag.IntVar(&metricPort, "udsinkMetricsPort", 9090, "Metrics Port")
 	flag.Var(&meticslabels, "udsinkMetricsLabels", "Sink Metrics Labels E.g: label=val1,label1=val2")
@@ -185,7 +204,7 @@ func main() {
 		}
 	}
 
-	ps := prometheusSink{logger: logger, skipFailed: skipFailed, labels: labels, ignoreMetricsTs: ignoreMetricsTs}
+	ps := prometheusSink{logger: logger, skipFailed: skipFailed, labels: labels, ignoreMetricsTs: ignoreMetricsTs, metricsName: metricName, enableMsgTransformer: enableMsgTransformer}
 	ps.metrics = NewMetricsServer(labels)
 	go ps.metrics.startMetricServer(metricPort)
 	ps.logger.Infof("Metrics publisher initialized with port=%d", metricPort)

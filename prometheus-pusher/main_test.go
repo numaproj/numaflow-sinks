@@ -45,7 +45,7 @@ func TestParseStringToMap(t *testing.T) {
 
 func TestMergeLabel(t *testing.T) {
 	payloadMsg := `{"namespace": "dev-devx-o11yfuzzygqlfederation-usw2-qal", "name": "namespace_http_numalogic_o11yfuzzygqlfederation_segment_api_error_count_anomaly_anomaly_anomaly_anomaly_anomaly_anomaly_anomaly_anomaly_anomaly", "model_config": "default", "resume_training": true}`
-	var pl Payload
+	var pl PrometheusPayload
 	param := "key=value1,key1=value2,key2=value3"
 	data := parseStringToMap(param)
 	err := json.Unmarshal([]byte(payloadMsg), &pl)
@@ -83,7 +83,7 @@ func TestPusher(t *testing.T) {
 	ps := prometheusSink{logger: logger, skipFailed: false, labels: nil}
 	payloadMsg := `[{"TimestampMs":1680124991883,"name":"namespace_app_rollouts_unified_anomaly","namespace":"dev_devx_o11yfuzzygqlfederation_usw2_stg","type":"Gauge","value":0.4944,"labels":{"app":"o11y_fuzzy_gql_federation","intuit_alert":"true","model_version":"1","namespace":"dev_devx_o11yfuzzygqlfederation_usw2_stg","rollouts_pod_template_hash":"794dcbf4b7"}},
 					{"TimestampMs":1680124991883,"name":"namespace_app_rollouts_unified_anomaly","namespace":"dev_devx_o11yfuzzygqlfederation_usw2_stg","type":"Gauge","value":0.4955,"labels":{"app":"o11y_fuzzy_gql_federation","intuit_alert":"true","model_version":"1","namespace":"dev_devx_o11yfuzzygqlfederation_usw2_stg","rollouts_pod_template_hash":"794dcbf4b33"}}]`
-	var pl []Payload
+	var pl []PrometheusPayload
 	json.Unmarshal([]byte(payloadMsg), &pl)
 	t.Setenv("PROMETHEUS_SERVER", pgwOK.URL)
 	ps.metrics = &MetricsPublisher{}
