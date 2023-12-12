@@ -30,7 +30,7 @@ func (p *PrometheusPayload) mergeLabels(labels map[string]string) {
 
 func (p *PrometheusPayload) excludeLabels(labels []string) {
 	if p.Labels == nil {
-		p.Labels = make(map[string]string)
+		return
 	}
 	for _, key := range labels {
 		// Should not override the payload label values

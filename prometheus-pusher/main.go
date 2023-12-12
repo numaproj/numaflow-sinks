@@ -133,9 +133,12 @@ func (p *prometheusSink) Sink(ctx context.Context, datumStreamCh <-chan sinksdk.
 				return failed
 			}
 		}
-
 		prometheusPayload.mergeLabels(p.labels)
-		prometheusPayload.excludeLabels(p.excludeLabels)
+
+		if len(p.excludeLabels) > 0 {
+			prometheusPayload.excludeLabels(p.excludeLabels)
+		}
+
 		pls = append(pls, prometheusPayload)
 	}
 	err := p.push(pls)
@@ -188,7 +191,7 @@ func main() {
 	logger := logging.NewLogger().Named("prometheus-sink")
 	skipFailedStr := os.Getenv(SKIP_VALIDATION_FAILED)
 	labels := parseStringToMap(os.Getenv(METRICS_LABELS))
-	exclude_labels := parseStringToSlice(os.Getenv(EXCLUDE_METRIC_LABELS))
+	excludeLabels := parseStringToSlice(os.Getenv(EXCLUDE_METRIC_LABELS))
 	metricName := os.Getenv(METRICS_NAME)
 	if metricName == "" {
 		metricName = "namespace_app_rollouts_unified_anomaly"
@@ -212,7 +215,7 @@ func main() {
 		}
 	}
 
-	ps := prometheusSink{logger: logger, skipFailed: skipFailed, labels: labels, excludeLabels: exclude_labels, ignoreMetricsTs: ignoreMetricsTs,
+	ps := prometheusSink{logger: logger, skipFailed: skipFailed, labels: labels, excludeLabels: excludeLabels, ignoreMetricsTs: ignoreMetricsTs,
 		metricsName: metricName, enableMsgTransformer: enableMsgTransformer}
 	ps.metrics = NewMetricsServer(labels)
 	go ps.metrics.startMetricServer(metricPort)

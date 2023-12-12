@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"github.com/stretchr/testify/assert"
+	"strings"
 	"testing"
 )
 
@@ -47,6 +48,14 @@ func TestExcludePrometheusLabelPayload(t *testing.T) {
 	prometheusPayload.excludeLabels(exlabels)
 	assert.Equal(t, prometheusPayload.TimestampMs, int64(1701201827))
 	assert.Equal(t, prometheusPayload.Value, 1.2)
+	assert.Equal(t, prometheusPayload.Labels["app"], "test-app")
+	assert.Equal(t, prometheusPayload.Labels["namespace"], "test-namespace")
+	assert.Equal(t, prometheusPayload.Labels["rollouts_pod_template_hash"], "597b5bd8cc")
+	assert.NotContains(t, prometheusPayload.Labels, "label1")
+	assert.NotContains(t, prometheusPayload.Labels, "numalogic")
+
+	prometheusPayload.excludeLabels(nil)
+	prometheusPayload.excludeLabels(strings.Split("", ","))
 	assert.Equal(t, prometheusPayload.Labels["app"], "test-app")
 	assert.Equal(t, prometheusPayload.Labels["namespace"], "test-namespace")
 	assert.Equal(t, prometheusPayload.Labels["rollouts_pod_template_hash"], "597b5bd8cc")
