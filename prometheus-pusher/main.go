@@ -24,12 +24,14 @@ const (
 	SKIP_VALIDATION_FAILED = "SKIP_VALIDATION_FAILED"
 	METRICS_LABELS         = "METRICS_LABELS"
 	METRICS_NAME           = "METRICS_NAME"
+	EXCLUDE_METRIC_LABELS  = "EXCLUDE_METRICS_LABELS"
 )
 
 type prometheusSink struct {
 	logger               *zap.SugaredLogger
 	skipFailed           bool
 	labels               map[string]string
+	excludeLabels        []string
 	metrics              *MetricsPublisher
 	ignoreMetricsTs      bool
 	metricsName          string
@@ -133,6 +135,7 @@ func (p *prometheusSink) Sink(ctx context.Context, datumStreamCh <-chan sinksdk.
 		}
 
 		prometheusPayload.mergeLabels(p.labels)
+		prometheusPayload.excludeLabels(p.excludeLabels)
 		pls = append(pls, prometheusPayload)
 	}
 	err := p.push(pls)
@@ -152,6 +155,10 @@ func (p *prometheusSink) createPusher(jobName string) (*push.Pusher, error) {
 	}
 	pusher := push.New(server, jobName)
 	return pusher, nil
+}
+
+func parseStringToSlice(envValue string) []string {
+	return strings.Split(envValue, ",")
 }
 
 func parseStringToMap(envValue string) map[string]string {
@@ -181,6 +188,7 @@ func main() {
 	logger := logging.NewLogger().Named("prometheus-sink")
 	skipFailedStr := os.Getenv(SKIP_VALIDATION_FAILED)
 	labels := parseStringToMap(os.Getenv(METRICS_LABELS))
+	exclude_labels := parseStringToSlice(os.Getenv(EXCLUDE_METRIC_LABELS))
 	metricName := os.Getenv(METRICS_NAME)
 	if metricName == "" {
 		metricName = "namespace_app_rollouts_unified_anomaly"
@@ -204,7 +212,8 @@ func main() {
 		}
 	}
 
-	ps := prometheusSink{logger: logger, skipFailed: skipFailed, labels: labels, ignoreMetricsTs: ignoreMetricsTs, metricsName: metricName, enableMsgTransformer: enableMsgTransformer}
+	ps := prometheusSink{logger: logger, skipFailed: skipFailed, labels: labels, excludeLabels: exclude_labels, ignoreMetricsTs: ignoreMetricsTs,
+		metricsName: metricName, enableMsgTransformer: enableMsgTransformer}
 	ps.metrics = NewMetricsServer(labels)
 	go ps.metrics.startMetricServer(metricPort)
 	ps.logger.Infof("Metrics publisher initialized with port=%d", metricPort)

@@ -28,6 +28,19 @@ func (p *PrometheusPayload) mergeLabels(labels map[string]string) {
 	}
 }
 
+func (p *PrometheusPayload) excludeLabels(labels []string) {
+	if p.Labels == nil {
+		p.Labels = make(map[string]string)
+	}
+	for _, key := range labels {
+		// Should not override the payload label values
+		if _, ok := p.Labels[key]; ok {
+			delete(p.Labels, key)
+		}
+
+	}
+}
+
 type OriginalPayload struct {
 	UUID           string                 `json:"uuid"`
 	ConfigID       string                 `json:"config_id"`
