@@ -28,6 +28,19 @@ func (p *PrometheusPayload) mergeLabels(labels map[string]string) {
 	}
 }
 
+func (p *PrometheusPayload) excludeLabels(labels []string) {
+	if p.Labels == nil {
+		return
+	}
+	for _, key := range labels {
+		// Should not override the payload label values
+		if _, ok := p.Labels[key]; ok {
+			delete(p.Labels, key)
+		}
+
+	}
+}
+
 type OriginalPayload struct {
 	UUID           string                 `json:"uuid"`
 	ConfigID       string                 `json:"config_id"`
@@ -40,6 +53,7 @@ type OriginalPayload struct {
 
 func (op *OriginalPayload) ConvertToPrometheusPayload(metricName string) []*PrometheusPayload {
 	payloads := make([]*PrometheusPayload, 0)
+
 	value, err := strconv.ParseFloat(fmt.Sprintf("%.4f", op.UnifiedAnomaly), 64)
 	if err != nil {
 		value = 0
@@ -61,7 +75,6 @@ func (op *OriginalPayload) ConvertToPrometheusPayload(metricName string) []*Prom
 	if namespace == nil {
 		namespace = ""
 	}
-
 	payloads = append(payloads, &PrometheusPayload{
 		Name:        metricName,
 		TimestampMs: op.Timestamp,
@@ -87,5 +100,4 @@ func (op *OriginalPayload) ConvertToPrometheusPayload(metricName string) []*Prom
 		})
 	}
 	return payloads
-
 }
