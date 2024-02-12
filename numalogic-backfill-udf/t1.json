@@ -1,0 +1,104 @@
+{
+  "config_id": "aiops-argorollout-demo",
+  "uuid": "eae9dc5bd002460fa7e09f6c1d15dafe",
+  "start_time": 1707182160,
+  "end_time": 1707182520,
+  "data": [
+    {
+      "timestamp": 1707182187,
+      "namespace_app_rollouts_cpu_utilization": 5.605567818834022,
+      "namespace_app_rollouts_memory_utilization": 9.566335967092803,
+      "namespace_app_rollouts_http_requests_latency": 0.001127511457427999,
+      "namespace_app_rollouts_http_request_error_rate": 1.993569131832797
+    },
+    {
+      "timestamp": 1707182217,
+      "namespace_app_rollouts_cpu_utilization": 8.632587630720066,
+      "namespace_app_rollouts_http_request_error_rate": 1.987179487179487,
+      "namespace_app_rollouts_memory_utilization": 9.540226483585858,
+      "namespace_app_rollouts_http_requests_latency": 0.0011256811072083775
+    },
+    {
+      "timestamp": 1707182247,
+      "namespace_app_rollouts_http_request_error_rate": 1.8542231596932544,
+      "namespace_app_rollouts_http_requests_latency": 0.0011216042454936788,
+      "namespace_app_rollouts_cpu_utilization": 5.030929347936176,
+      "namespace_app_rollouts_memory_utilization": 9.63122435290404
+    },
+    {
+      "timestamp": 1707182277,
+      "namespace_app_rollouts_http_requests_latency": 0.0011302827156246956,
+      "namespace_app_rollouts_http_request_error_rate": 2.506426735218509,
+      "namespace_app_rollouts_cpu_utilization": 4.9654777127993786,
+      "namespace_app_rollouts_memory_utilization": 9.54928927951389
+    },
+    {
+      "timestamp": 1707182307,
+      "namespace_app_rollouts_cpu_utilization": 12.328100191316896,
+      "namespace_app_rollouts_http_request_error_rate": 2.250803858520901,
+      "namespace_app_rollouts_http_requests_latency": 0.0011259877185187442,
+      "namespace_app_rollouts_memory_utilization": 9.547408903488005
+    },
+    {
+      "timestamp": 1707182337,
+      "namespace_app_rollouts_http_requests_latency": 0.0011319358437491761,
+      "namespace_app_rollouts_cpu_utilization": 13.774132937961594,
+      "namespace_app_rollouts_http_request_error_rate": 2.498398462524023,
+      "namespace_app_rollouts_memory_utilization": 9.612482244318182
+    },
+    {
+      "timestamp": 1707182367,
+      "namespace_app_rollouts_http_requests_latency": 0.0011199129369790508,
+      "namespace_app_rollouts_memory_utilization": 9.612759676846592,
+      "namespace_app_rollouts_cpu_utilization": 9.918568070285325,
+      "namespace_app_rollouts_http_request_error_rate": 2.051282051282051
+    },
+    {
+      "timestamp": 1707182397,
+      "namespace_app_rollouts_cpu_utilization": 12.623623759990137,
+      "namespace_app_rollouts_memory_utilization": 9.489949544270834,
+      "namespace_app_rollouts_http_request_error_rate": 1.7352185089974288,
+      "namespace_app_rollouts_http_requests_latency": 0.0011225914865752428
+    },
+    {
+      "timestamp": 1707182427,
+      "namespace_app_rollouts_http_requests_latency": 0.0011260003118012418,
+      "namespace_app_rollouts_http_request_error_rate": 1.9961536393442831,
+      "namespace_app_rollouts_cpu_utilization": 8.730511982663854,
+      "namespace_app_rollouts_memory_utilization": 9.645404237689394
+    },
+    {
+      "timestamp": 1707182457,
+      "namespace_app_rollouts_cpu_utilization": 5.336222893852472,
+      "namespace_app_rollouts_http_request_error_rate": 2.2689124977718613,
+      "namespace_app_rollouts_memory_utilization": 9.530547170928031,
+      "namespace_app_rollouts_http_requests_latency": 0.0011235658171823595
+    },
+    {
+      "timestamp": 1707182487,
+      "namespace_app_rollouts_cpu_utilization": 5.828478241945006,
+      "namespace_app_rollouts_http_requests_latency": 0.0011283330750592084,
+      "namespace_app_rollouts_http_request_error_rate": 2.114028812930205,
+      "namespace_app_rollouts_memory_utilization": 9.65884430239899
+    },
+    {
+      "timestamp": 1707182517,
+      "namespace_app_rollouts_cpu_utilization": 14.271747104629757,
+      "namespace_app_rollouts_http_requests_latency": 0.0011247229101902943,
+      "namespace_app_rollouts_http_request_error_rate": 2.9505867676213424,
+      "namespace_app_rollouts_memory_utilization": 9.530084783380682
+    }
+  ],
+  "metadata": {
+    "aiops_argorollouts": "true",
+    "app": "aiops-argorollout-demo",
+    "apps_deployment": "aiops-argorollout-demo",
+    "assetId": "5840060409964593875",
+    "intuit_alert": "true",
+    "namespace": "oss-analytics-aiopsargorolloutdemo-usw2-qal",
+    "numalogic": "true",
+    "prometheus": "addon-metricset-ns/k8s-prometheus",
+    "role": "stable",
+    "rollouts_pod_template_hash": "5c68c6dd76"
+  }
+}
