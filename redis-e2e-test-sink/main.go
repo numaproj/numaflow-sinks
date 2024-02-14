@@ -12,7 +12,7 @@ import (
 
 type redisTestSink struct{}
 
-// This redis UDSink is created for numaflow e2e tests. This handle function assumes that
+// Sink This redis UDSink is created for numaflow e2e tests. This handle function assumes that
 // a redis instance listening on address redis:6379 has already be up and running.
 func (rds *redisTestSink) Sink(ctx context.Context, datumStreamCh <-chan sinksdk.Datum) sinksdk.Responses {
 	client := redis.NewClient(&redis.Options{

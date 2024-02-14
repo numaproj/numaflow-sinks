@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/go-redis/redis/v8 v8.11.4
-	github.com/numaproj/numaflow-go v0.4.5
+	github.com/numaproj/numaflow-go v0.6.1-0.20240212202512-715955f1e069
 )
 
 require (
@@ -19,5 +19,3 @@ require (
 	google.golang.org/grpc v1.57.0 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
 )
-
-replace github.com/numaproj/numaflow-go => github.com/a3hadi/numaflow-go v0.0.0-20240207001057-87e8cd7af9ac
