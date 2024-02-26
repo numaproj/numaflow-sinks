@@ -51,7 +51,8 @@ type OriginalPayload struct {
 	Metadata       map[string]interface{} `json:"metadata"`
 }
 
-func (op *OriginalPayload) ConvertToPrometheusPayload(metricName string) *PrometheusPayload {
+func (op *OriginalPayload) ConvertToPrometheusPayload(metricName string) []*PrometheusPayload {
+	payloads := make([]*PrometheusPayload, 0)
 
 	value, err := strconv.ParseFloat(fmt.Sprintf("%.4f", op.UnifiedAnomaly), 64)
 	if err != nil {
@@ -74,7 +75,7 @@ func (op *OriginalPayload) ConvertToPrometheusPayload(metricName string) *Promet
 	if namespace == nil {
 		namespace = ""
 	}
-	payload := &PrometheusPayload{
+	payloads = append(payloads, &PrometheusPayload{
 		Name:        metricName,
 		TimestampMs: op.Timestamp,
 		Namespace:   namespace.(string),
@@ -82,7 +83,21 @@ func (op *OriginalPayload) ConvertToPrometheusPayload(metricName string) *Promet
 		Type:        "Gauge",
 		Value:       value,
 		Labels:      labels,
+	})
+	for name, metricVal := range op.Data {
+		value, err := strconv.ParseFloat(fmt.Sprintf("%.4f", metricVal), 64)
+		if err != nil {
+			value = 0
+		}
+		payloads = append(payloads, &PrometheusPayload{
+			Name:        fmt.Sprintf("%s_anomaly", name),
+			TimestampMs: op.Timestamp,
+			Namespace:   namespace.(string),
+			Subsystem:   "none",
+			Type:        "Gauge",
+			Value:       value,
+			Labels:      labels,
+		})
 	}
-	return payload
-
+	return payloads
 }

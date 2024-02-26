@@ -115,7 +115,7 @@ func (p *prometheusSink) Sink(ctx context.Context, datumStreamCh <-chan sinksdk.
 		failed = failed.Append(sinksdk.ResponseFailure(datum.ID(), "failed to push the metrics"))
 	}
 	var pls []PrometheusPayload
-	var prometheusPayload PrometheusPayload
+	var prometheusPayloads []*PrometheusPayload
 	for _, payloadMsg := range payloads {
 		p.metrics.IncreaseTotalPushed()
 		if p.enableMsgTransformer {
@@ -125,21 +125,27 @@ func (p *prometheusSink) Sink(ctx context.Context, datumStreamCh <-chan sinksdk.
 				p.metrics.IncreaseTotalSkipped()
 				return failed
 			}
-			prometheusPayload = *opl.ConvertToPrometheusPayload(p.metricsName)
+			prometheusPayloads = opl.ConvertToPrometheusPayload(p.metricsName)
+			for _, prometheusPayload := range prometheusPayloads {
+				prometheusPayload.mergeLabels(p.labels)
+				if len(p.excludeLabels) > 0 {
+					prometheusPayload.excludeLabels(p.excludeLabels)
+				}
+				pls = append(pls, *prometheusPayload)
+			}
 		} else {
+			var prometheusPayload PrometheusPayload
 			err := json.Unmarshal([]byte(payloadMsg), &prometheusPayload)
 			if !p.skipFailed && err != nil {
 				p.metrics.IncreaseTotalSkipped()
 				return failed
 			}
+			prometheusPayload.mergeLabels(p.labels)
+			if len(p.excludeLabels) > 0 {
+				prometheusPayload.excludeLabels(p.excludeLabels)
+			}
+			pls = append(pls, prometheusPayload)
 		}
-		prometheusPayload.mergeLabels(p.labels)
-
-		if len(p.excludeLabels) > 0 {
-			prometheusPayload.excludeLabels(p.excludeLabels)
-		}
-
-		pls = append(pls, prometheusPayload)
 	}
 	err := p.push(pls)
 	if err != nil {
@@ -215,8 +221,9 @@ func main() {
 		}
 	}
 
-	ps := prometheusSink{logger: logger, skipFailed: skipFailed, labels: labels, excludeLabels: excludeLabels, ignoreMetricsTs: ignoreMetricsTs,
-		metricsName: metricName, enableMsgTransformer: enableMsgTransformer}
+	ps := prometheusSink{logger: logger, skipFailed: skipFailed, labels: labels, excludeLabels: excludeLabels,
+		ignoreMetricsTs: ignoreMetricsTs, metricsName: metricName, enableMsgTransformer: enableMsgTransformer}
+
 	ps.metrics = NewMetricsServer(labels)
 	go ps.metrics.startMetricServer(metricPort)
 	ps.logger.Infof("Metrics publisher initialized with port=%d", metricPort)
