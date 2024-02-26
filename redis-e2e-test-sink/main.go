@@ -7,13 +7,14 @@ import (
 	"os"
 
 	"github.com/go-redis/redis/v8"
-	sinksdk "github.com/numaproj/numaflow-go/pkg/sink"
-	"github.com/numaproj/numaflow-go/pkg/sink/server"
+	sinksdk "github.com/numaproj/numaflow-go/pkg/sinker"
 )
 
-// This redis UDSink is created for numaflow e2e tests. This handle function assumes that
+type redisTestSink struct{}
+
+// Sink This redis UDSink is created for numaflow e2e tests. This handle function assumes that
 // a redis instance listening on address redis:6379 has already be up and running.
-func handle(ctx context.Context, datumStreamCh <-chan sinksdk.Datum) sinksdk.Responses {
+func (rds *redisTestSink) Sink(ctx context.Context, datumStreamCh <-chan sinksdk.Datum) sinksdk.Responses {
 	client := redis.NewClient(&redis.Options{
 		Addr: "redis:6379",
 	})
@@ -41,5 +42,8 @@ func handle(ctx context.Context, datumStreamCh <-chan sinksdk.Datum) sinksdk.Res
 }
 
 func main() {
-	server.New().RegisterSinker(sinksdk.SinkFunc(handle)).Start(context.Background())
+	err := sinksdk.NewServer(&redisTestSink{}).Start(context.Background())
+	if err != nil {
+		log.Panic("Failed to start sink function server: ", err)
+	}
 }
