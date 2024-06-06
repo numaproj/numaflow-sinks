@@ -5,8 +5,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	numaflag "github.com/numaproj/numaflow-sinks/shared/flag"
-	"github.com/numaproj/numaflow/pkg/shared/logging"
 	"log"
 	"os"
 	"strconv"
@@ -14,6 +12,8 @@ import (
 	"time"
 
 	sinksdk "github.com/numaproj/numaflow-go/pkg/sinker"
+	numaflag "github.com/numaproj/numaflow-sinks/shared/flag"
+	"github.com/numaproj/numaflow/pkg/shared/logging"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/push"
 	"go.uber.org/zap"
