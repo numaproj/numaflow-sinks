@@ -20,7 +20,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/cache"
 	"k8s.io/client-go/rest"
 
-	numaexpr "github.com/numaproj/numaflow-sinks/argoworkflow/shared/expr"
+	numaexpr "github.com/numaproj/numaflow-sinks/argo-workflow/shared/expr"
 
 	sinksdk "github.com/numaproj/numaflow-go/pkg/sink"
 	"github.com/numaproj/numaflow-go/pkg/sink/server"
