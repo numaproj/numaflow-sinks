@@ -1,4 +1,4 @@
-module github.com/numaproj/numaflow-sinks/argoworkflow
+module github.com/numaproj/numaflow-sinks/argo-workflow
 
 go 1.18
 
