@@ -199,7 +199,7 @@ func main() {
 	skipFailedStr := os.Getenv(SKIP_VALIDATION_FAILED)
 	labels := parseStringToMap(os.Getenv(METRICS_LABELS))
 	excludeLabels := parseStringToSlice(os.Getenv(EXCLUDE_METRIC_LABELS))
-	opexMetricsPrefix := os.Getenv(os.Getenv(OPEX_METRIC_PREFIX))
+	opexMetricsPrefix := os.Getenv(OPEX_METRIC_PREFIX)
 	metricName := os.Getenv(METRICS_NAME)
 	if metricName == "" {
 		metricName = "namespace_app_rollouts_unified_anomaly"
