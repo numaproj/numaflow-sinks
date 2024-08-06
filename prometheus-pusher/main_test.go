@@ -64,7 +64,7 @@ func TestPusher(t *testing.T) {
 
 	pgwOK := httptest.NewServer(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			dec := expfmt.NewDecoder(r.Body, expfmt.FmtProtoDelim)
+			dec := expfmt.NewDecoder(r.Body, expfmt.ResponseFormat(r.Header))
 
 			var mf io_prometheus_client.MetricFamily
 			dec.Decode(&mf)

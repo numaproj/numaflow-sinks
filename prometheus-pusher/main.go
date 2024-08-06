@@ -25,6 +25,7 @@ const (
 	METRICS_LABELS         = "METRICS_LABELS"
 	METRICS_NAME           = "METRICS_NAME"
 	EXCLUDE_METRIC_LABELS  = "EXCLUDE_METRICS_LABELS"
+	OPEX_METRIC_PREFIX     = "OPEX_METRIC_PREFIX"
 )
 
 type prometheusSink struct {
@@ -198,9 +199,13 @@ func main() {
 	skipFailedStr := os.Getenv(SKIP_VALIDATION_FAILED)
 	labels := parseStringToMap(os.Getenv(METRICS_LABELS))
 	excludeLabels := parseStringToSlice(os.Getenv(EXCLUDE_METRIC_LABELS))
+	opexMetricsPrefix := os.Getenv(os.Getenv(OPEX_METRIC_PREFIX))
 	metricName := os.Getenv(METRICS_NAME)
 	if metricName == "" {
 		metricName = "namespace_app_rollouts_unified_anomaly"
+	}
+	if opexMetricsPrefix == "" {
+		opexMetricsPrefix = "numaflow_prom_sink"
 	}
 	var metricPort int
 	var ignoreMetricsTs, enableMsgTransformer bool
@@ -224,7 +229,7 @@ func main() {
 	ps := prometheusSink{logger: logger, skipFailed: skipFailed, labels: labels, excludeLabels: excludeLabels,
 		ignoreMetricsTs: ignoreMetricsTs, metricsName: metricName, enableMsgTransformer: enableMsgTransformer}
 
-	ps.metrics = NewMetricsServer(labels)
+	ps.metrics = NewMetricsServer(labels, opexMetricsPrefix)
 	go ps.metrics.startMetricServer(metricPort)
 	ps.logger.Infof("Metrics publisher initialized with port=%d", metricPort)
 	err = sinksdk.NewServer(&ps).Start(context.Background())
