@@ -64,7 +64,8 @@ func TestPusher(t *testing.T) {
 
 	pgwOK := httptest.NewServer(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			dec := expfmt.NewDecoder(r.Body, expfmt.FmtProtoDelim)
+			//r.Header().Set("Content-Type", "application/vnd.google.protobuf")
+			dec := expfmt.NewDecoder(r.Body, expfmt.ResponseFormat(r.Header))
 
 			var mf io_prometheus_client.MetricFamily
 			dec.Decode(&mf)
@@ -78,7 +79,7 @@ func TestPusher(t *testing.T) {
 			w.WriteHeader(http.StatusOK)
 		}),
 	)
-	defer pgwOK.Close()
+	//defer pgwOK.Close()
 	logger := logging.NewLogger().Named("prometheus-sink")
 	ps := prometheusSink{logger: logger, skipFailed: false, labels: nil}
 	payloadMsg := `[{"TimestampMs":1680124991883,"name":"namespace_app_rollouts_unified_anomaly","namespace":"dev_devx_o11yfuzzygqlfederation_usw2_stg","type":"Gauge","value":0.4944,"labels":{"app":"o11y_fuzzy_gql_federation","intuit_alert":"true","model_version":"1","namespace":"dev_devx_o11yfuzzygqlfederation_usw2_stg","rollouts_pod_template_hash":"794dcbf4b7"}},

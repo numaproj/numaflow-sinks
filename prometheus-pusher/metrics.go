@@ -16,32 +16,33 @@ type MetricsPublisher struct {
 	metricsTotalSkipped     prometheus.Counter
 	metricsAnomalyGenerated *prometheus.CounterVec
 	labels                  map[string]string
+	prefix                  string
 }
 
 func (mp *MetricsPublisher) registerMertics() {
 	mp.metricsTotalPushed = promauto.NewCounter(prometheus.CounterOpts{
-		Name:        "total_metrics_pushed",
+		Name:        mp.prefix + "_" + "total_metrics_pushed",
 		Help:        "The total number of metrics pushed",
 		ConstLabels: mp.labels,
 	})
 	mp.metricsTotalSuccess = promauto.NewCounter(prometheus.CounterOpts{
-		Name:        "total_metrics_success",
+		Name:        mp.prefix + "_" + "total_metrics_success",
 		Help:        "The total number of metrics successfully pushed",
 		ConstLabels: mp.labels,
 	})
 	mp.metricsTotalFailed = promauto.NewCounter(prometheus.CounterOpts{
-		Name:        "total_metrics_failed",
+		Name:        mp.prefix + "_" + "total_metrics_failed",
 		Help:        "The total number of metrics failed push",
 		ConstLabels: mp.labels,
 	})
 	mp.metricsTotalSkipped = promauto.NewCounter(prometheus.CounterOpts{
-		Name:        "total_metrics_skipped",
+		Name:        mp.prefix + "_" + "total_metrics_skipped",
 		Help:        "The total number of metrics skipped",
 		ConstLabels: mp.labels,
 	})
 
 	mp.metricsAnomalyGenerated = promauto.NewCounterVec(prometheus.CounterOpts{
-		Name:        "total_anomaly_generated",
+		Name:        mp.prefix + "_" + "total_anomaly_generated",
 		Help:        "The total count of anomaly score generator",
 		ConstLabels: mp.labels,
 	}, []string{"namespace", "app", "metrics"})
@@ -64,9 +65,10 @@ func (mp *MetricsPublisher) IncreaseAnomalyGenerated(namespace, app, metricName 
 	mp.metricsAnomalyGenerated.WithLabelValues(namespace, app, metricName).Inc()
 }
 
-func NewMetricsServer(labels map[string]string) *MetricsPublisher {
+func NewMetricsServer(labels map[string]string, prefix string) *MetricsPublisher {
 	metricsPublisher := &MetricsPublisher{}
 	metricsPublisher.labels = labels
+	metricsPublisher.prefix = prefix
 	metricsPublisher.registerMertics()
 	return metricsPublisher
 

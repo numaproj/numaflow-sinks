@@ -7,7 +7,7 @@ import (
 )
 
 func TestMetricsPublisher(t *testing.T) {
-	mp := NewMetricsServer(map[string]string{"label": "val1", "label2": "val2"})
+	mp := NewMetricsServer(map[string]string{"label": "val1", "label2": "val2"}, "prefix")
 	mp.IncreaseTotalPushed()
 	mp.IncreaseTotalSuccess()
 	mp.IncreaseTotalSkipped()
